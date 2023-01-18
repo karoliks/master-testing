@@ -1,0 +1,8 @@
+name = "sat"
+uuid = "448200ac-1eab-4ce1-95c9-aa4446cb9687"
+authors = ["karoliks <karoline.k.sabo@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Z3 = "06b161dc-0161-11ea-0f74-41f836f4024b"
