@@ -16,7 +16,7 @@ def is_ef1_possible(n, m, V):
     # Each item allocated to at exactly one agent
     for g in range(m):
         # TODO double check that this is correct order
-        s.add(Sum([If(A[i][g], 1, 0) for i in range(n)]) <= 1)
+        s.add(Sum([If(A[i][g], 1, 0) for i in range(n)]) == 1)
 
     for i in range(n):
         for j in range(n):
@@ -63,7 +63,8 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     # Each item allocated to at exactly one agent
     for g in range(m):
         # TODO double check that this is correct order
-        s.add(Sum([If(A[i][g], 1, 0) for i in range(n)]) <= 1)
+        # var <= her. skal det ikke være ==?
+        s.add(Sum([If(A[i][g], 1, 0) for i in range(n)]) == 1)
 
     for i in range(n):
         for j in range(n):
