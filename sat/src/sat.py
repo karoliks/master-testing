@@ -38,10 +38,6 @@ def is_ef1_possible(n, m, V):
             s.add(Sum([If(A[i][g], 1, 0) * V[i][g] for g in range(m)]) >= 
                   Sum([V[j][g] * (If(A[j][g], 1, 0) - If(D[j][i][g], 1, 0)) for g in range(m)]))  # TODO dobbelsjekk omindeksenei D er riktige
 
-    # print(s.check())
-    # if(s.check() == sat):
-    #     print(s.model())
-
     return s.check() == sat
 
 
@@ -81,7 +77,6 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
 
             if i == j:
                 continue
-            print(V[i][0])
             # Check that there is no envy once an item is possibly dropped
             s.add(Sum([V[i][g] * If(A[i][g], 1, 0)
                        for g in range(m)]) >=
