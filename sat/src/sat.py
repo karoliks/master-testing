@@ -83,14 +83,11 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
                   Sum([V[i][g] * (If(A[j][g], 1, 0) - If(D[j][i][g], 1, 0))  # TODO dobbelsjekk omindeksenei D er riktige
                        for g in range(m)]))
 
-    print(G.get_edgelist())
-    # Enforce the conflicts from the graph
-    for e in G.get_edgelist():
-        print(e)
-        print(e[0])
-        print(e[1])
-        g = e[0]
-        h = e[1]
+    s.add(get_edge_conflicts(G, A, n))
+
+    # Check if an EF1 allocation can be found
+    return s.check() == sat
+
 
         for i in range(n):
             # Make sure that a single agent only can get one of two conflicting items
