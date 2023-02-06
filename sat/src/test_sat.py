@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
 
 
 def test_sum():
@@ -33,8 +33,19 @@ def test_ef1_with_conflicts():
         n, m, V_2, path) == True, "EF1 should be possible in this case"
 
 
+def test_discover_bad_valuation_functions():
+    n = 2
+    m = 3
+
+    path = Graph.Ring(n=3, circular=False)
+    plot(path, target='path.pdf')
+    assert find_valuation_function_with_no_ef1(
+        n, m, path) == True, "Could not find a desired valuation function"
+
+
 if __name__ == "__main__":
     test_sum()
     test_ef1_no_conflicts()
     test_ef1_with_conflicts()
+    test_discover_bad_valuation_functions()
     print("Everything passed")
