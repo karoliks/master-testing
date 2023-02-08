@@ -40,7 +40,7 @@ def get_formula_for_correct_removing_of_items(A, D, n, m):
         for j in range(n):
             # Make sure that when checking for EF1, each agent is only allowed togive away one item to make another agent not jealous
             # TODO double check that this is correct order
-            formulas.append(Sum([If(D[i][j][g], 1, 0) for g in range(n)]) == 1)
+            formulas.append(Sum([If(D[i][j][g], 1, 0) for g in range(m)]) <= 1)
 
             for g in range(m):
                 # Make sure only items that are actuallallocated to the agent in question, is dropped
