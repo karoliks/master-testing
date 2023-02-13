@@ -31,8 +31,7 @@ def test_ef1_with_conflicts():
     n = 2
     m = 3
     # V = np.ones((n, m))
-    # V_1 = np.array([[1., 0., 1.], [1., 0., 1.]])
-    V_1 = np.array([[0., 0., 0.], [0., 0., 0.]])
+    V_1 = np.array([[1., 0., 1.], [1., 0., 1.]])
     V_2 = np.array([[1., 1., 1.], [1., 1., 1.]])
     # G = ig.Graph.Ring(n=3, circular=False)
     path = Graph.Ring(n=3, circular=False)
