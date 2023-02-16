@@ -6,4 +6,5 @@ version = "0.1.0"
 [deps]
 Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 Z3 = "06b161dc-0161-11ea-0f74-41f836f4024b"
