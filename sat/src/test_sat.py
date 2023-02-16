@@ -26,7 +26,6 @@ def test_ef1_no_conflicts_2():
         n, m, V) == True, "EF1 should be possible when there are no conflicts"
 
 
-
 def test_ef1_with_conflicts():
     n = 2
     m = 3
@@ -52,6 +51,7 @@ def test_discover_bad_valuation_functions():
     assert find_valuation_function_with_no_ef1(
         n, m, path)[0] == True, "Could not find a desired valuation function"
 
+
 def test_send_valuations_for_checking():
     n = 2
     m = 3
@@ -59,7 +59,7 @@ def test_send_valuations_for_checking():
     path = Graph.Ring(n=3, circular=False)
     plot(path, target='path.pdf')
     V = find_valuation_function_with_no_ef1(
-        n, m, path)[1] 
+        n, m, path)[1]
     V = np.array([V[0:3], V[3:6]])
     assert is_ef1_with_conflicts_possible(
         n, m, V, path) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"

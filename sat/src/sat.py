@@ -88,7 +88,7 @@ def get_formula_for_correct_removing_of_items_list(A, D, n, m):
     return And([formula for formula in formulas])
 
 
-def get_formula_for_one_item_for_each_agent(A, n, m):
+def get_formula_for_one_item_to_one_agent(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
@@ -209,7 +209,6 @@ def get_formula_for_ensuring_ef1_list_list(A, D, V, n, m):
 
 def get_formula_for_ensuring_ef1_list_old(A, D, V, n, m):
     formulas = []
-    
 
     for i in range(n):
         for j in range(n):
@@ -274,6 +273,20 @@ def more_than_100(V, n):
 
 def less_than_100(V, n):
     return And(V[1][2] < 100)
+
+
+def v_less_than_a(V, A, n, m):
+    formulas = []
+
+    for i in range(n):
+        for j in range(m):
+            formulas.append(V[i][j] == 0)
+
+    # return And([V[0][0] == 10, V[0][1] == 20])
+    return formulas
+    # return And([formula for formula in formulas])
+
+
 ################################################################
 
 
@@ -288,7 +301,7 @@ def is_ef1_possible(n, m, V):
     D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
           for j in range(n)] for k in range(n)]
 
-    s.add(get_formula_for_one_item_for_each_agent(A, n, m))
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_formula_for_ensuring_ef1(A, V, n, m))
 
@@ -310,26 +323,11 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
           for j in range(n)] for k in range(n)]
 
-    s.add(get_formula_for_one_item_for_each_agent(A, n, m))
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_formula_for_ensuring_ef1(A, V, n, m))
     s.add(get_edge_conflicts(G, A, n))
-    
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-    #            Implies(
-    #             And(
-    #                 get_formula_for_one_item_for_each_agent_list([a for aa in A for a in aa], n, m),
-    #                 get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #                 get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m)),
-                
-    #                 Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [d for ddd in D for dd in ddd for d in dd], V, n, m),
-    #            )))) # TODO and de over med dette
-    # s.add(
-    #     ForAll( 
-    #            [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-    #            Implies(True,Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [d for ddd in D for dd in ddd for d in dd], V, n, m)))))
-                    
+
     return s.check() == sat
 
 
@@ -351,193 +349,30 @@ def find_valuation_function_with_no_ef1(n, m, G):
     V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
          for i in range(n)]
 
-    # V = np.array([[0., 0., 0.], [0., 0., 0.]])
-
     # Make sure all values are non-negative
     for i in range(n):
         for j in range(m):
             s.add(V[i][j] >= 0)
-    # for i in range(n):
-    #     s.add(Sum(V[i]) > 0)
-        # s.add(Sum([v for vv in V for v in vv]) > 4)
-    # s.add(get_formula_for_one_item_for_each_agent(A, n, m))
-    # s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
-    # s.add(get_edge_conflicts(G, A, n))
-    # s.add(Not(
-    #     Exists([a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-    #            And(
-    #             get_formula_for_ensuring_ef1_list_new(
-    #                 [a for aa in A for a in aa], V, n, m),
-    #             get_formula_for_one_item_for_each_agent_list(
-    #                 [a for aa in A for a in aa], n, m),
-    #             get_formula_for_correct_removing_of_items_list(
-    #                 [a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m),
-    #             get_edge_conflicts_list(
-    #                 G, [a for aa in A for a in aa], n)
-    #            ))))  # TODO and de over med dette
-    
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #            Implies(
-    #             And(
-    #                 get_formula_for_one_item_for_each_agent_list([a for aa in A for a in aa], n, m),
-    #                 get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #                 get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m)),
 
-    #                 Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [d for ddd in D for dd in ddd for d in dd], V, n, m),
-    #            )))) # TODO and de over med dette
-    # s.add(ForAll(
-    # [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-
-    # And(
-    #     get_formula_for_one_item_for_each_agent_list(
-    #         [a for aa in A for a in aa], n, m),
-    #     get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #     get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m))))
-
-    # TODO nøste D inni ? https://stackoverflow.com/questions/66322928/define-quantifier-variable-issue-in-forall-in-z3py
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #            Implies(
-    #             And(
-    #                 get_formula_for_one_item_for_each_agent_list([a for aa in A for a in aa], n, m),
-    #                 get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #             ),
-    #         And(
-    #                 get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m)),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #         Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [
-    #             d for ddd in D for dd in ddd for d in dd], V, n, m))
-
-    #     )))  # TODO and de over med dette
-
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #     Implies(And(
-    #             get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #                                                            d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #             get_formula_for_one_item_for_each_agent_list(
-    #                 [a for aa in A for a in aa], n, m),
-    #             get_edge_conflicts_list(G, [a for aa in A for a in aa], n)),
-    #             Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [
-    #                 d for ddd in D for dd in ddd for d in dd], V, n, m))
-    #             )
-
-    # ))  # TODO and de over med dette
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #     Implies(And(
-    #             get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #                                                            d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #             get_formula_for_one_item_for_each_agent_list(
-    #                 [a for aa in A for a in aa], n, m),
-    #             get_edge_conflicts_list(G, [a for aa in A for a in aa], n)),
-    #             And([v == 1 for vv in V for v in vv]))
-
-    # ))  # TODO and de over med dette
-
-    s.add(Exists(
-        [a for aa in A for a in aa],
-        And(
-            # get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-            #     d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-            get_formula_for_one_item_to_one_agent_list(
-                [a for aa in A for a in aa], n, m),
-            get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-            get_formula_for_ensuring_ef1_list_new([a for aa in A for a in aa],
-                                                  V, n, m))
-
-    ))  # TODO and de over med dette
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #     If(And(
-    #         get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #             d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #         get_formula_for_one_item_for_each_agent_list(
-    #             [a for aa in A for a in aa], n, m),
-    #         get_edge_conflicts_list(G, [a for aa in A for a in aa], n)),
-    #        Not(get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [
-    #            d for ddd in D for dd in ddd for d in dd], V, n, m)), False)
-
-    # ))  # TODO and de over med dette
-
-    # s.add(Exists([v for vv in V for v in vv], ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],  Implies(And(
-    #         get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #             d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #         get_formula_for_one_item_for_each_agent_list(
-    #             [a for aa in A for a in aa], n, m),
-    #         get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #         get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #             d for ddd in D for dd in ddd for d in dd], n, m)),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-
-    #         Not(get_formula_for_ensuring_ef1_list_list([a for aa in A for a in aa],  [
-    #             d for ddd in D for dd in ddd for d in dd], [v for vv in V for v in vv], n, m)))
-    # )))  # TODO and de over med dette
-
-    # s.add(
-    #     ForAll(
-    #         [a for aa in A for a in aa],
-    #         Not(Exists([d for ddd in D for dd in ddd for d in dd],
-    #                    Implies(
-    #             And(
-    #                 get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [
-    #                     d for ddd in D for dd in ddd for d in dd], n, m),  # TODO: flytte denne sånn at den er sammen med EFI-kravet?
-    #                 get_formula_for_one_item_for_each_agent_list(
-    #                     [a for aa in A for a in aa], n, m),
-    #                 get_edge_conflicts_list(G, [a for aa in A for a in aa], n)),
-    #             get_formula_for_ensuring_ef1_list_new(
-    #                 [a for aa in A for a in aa],  V, n, m)
-    #         )
-
-    #         ))))  # TODO and de over med dette
-    
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-              
-    #             And(True,
-    #                 get_formula_for_one_item_for_each_agent_list([a for aa in A for a in aa], n, m),
-    #                 get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #                 get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m))        )) # TODO and de over med dette
-    
-    # s.add(Not(Exists(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
-    #     Implies(
-    #         And(
-    #             get_formula_for_one_item_for_each_agent_list(
-    #                 [a for aa in A for a in aa], n, m),
-    #             get_edge_conflicts_list(G, [a for aa in A for a in aa], n),
-    #             get_formula_for_correct_removing_of_items_list([a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m)),
-                
-    #         get_formula_for_ensuring_ef1_list_old([a for aa in A for a in aa],  [
-    #                                               d for ddd in D for dd in ddd for d in dd], V, n, m),
-    #     ))))  # TODO and de over med dette
-    
-    # s.add(ForAll(
-    #     [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-    #            Not(And(
-    #             get_formula_for_ensuring_ef1_list_old(
-    #                 [a for aa in A for a in aa],  [d for ddd in D for dd in ddd for d in dd], V, n, m),
-    #             get_formula_for_one_item_for_each_agent_list(
-    #                 [a for aa in A for a in aa], n, m),
-    #             get_edge_conflicts_list(
-    #                 G, [a for aa in A for a in aa], n),
-    #             get_formula_for_correct_removing_of_items_list(
-    #                 [a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m),
-    #            )))) # TODO and de over med dette
-
-    # s.add(
-    #     ForAll([a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd], 
-    #            And(
-    #            Not(And(get_formula_for_ensuring_ef1_list_new(
-    #                [a for aa in A for a in aa], V, n, m)),
-    #            get_formula_for_correct_removing_of_items_list(
-    #                [a for aa in A for a in aa], [d for ddd in D for dd in ddd for d in dd], n, m)),
-    #            get_formula_for_one_item_for_each_agent_list(
-    #                [a for aa in A for a in aa], n, m),
-    #            get_edge_conflicts_list(
-    #                G, [a for aa in A for a in aa], n)
-    #            )))  # TODO and de over med dette
-
+    s.add(ForAll(
+        [a for aa in A for a in aa] + [d for ddd in D for dd in ddd for d in dd],
+        Implies(And(
+            get_formula_for_one_item_to_one_agent(
+                [[a for a in aa] for aa in A], n, m),
+            get_edge_conflicts(
+                G, [[a for a in aa] for aa in A], n),
+            get_formula_for_correct_removing_of_items(
+                [[a for a in aa] for aa in A], [[[d for d in dd] for dd in ddd] for ddd in D], n, m)),
+                And(
+                    # v_less_than_a(V, [[a for a in aa] for aa in A], n, m)
+                    Not(get_formula_for_ensuring_ef1(
+                        [[a for a in aa] for aa in A], V, n, m)),
+                    # Not(get_formula_for_ensuring_ef1_list(
+                    #     [a for aa in A for a in aa],  [[[d for d in dd] for dd in ddd] for ddd in D], V, n, m)),
+                    # And([sum(V[0]) <= a for aa in A for a in aa] +
+                    #     [sum(V[1]) <= a for aa in A for a in aa]))
+        )
+        )))
 
     print(s.check())
     valuation_function = []
@@ -545,8 +380,8 @@ def find_valuation_function_with_no_ef1(n, m, G):
     if(s.check() == sat):
         # print(s.model())
         res = s.model()
-        m=s.model()
-        tuples = sorted ([(d, m[d]) for d in m], key = lambda x: str(x[0]))
+        m = s.model()
+        tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples]
 
         counter = 0
@@ -555,39 +390,9 @@ def find_valuation_function_with_no_ef1(n, m, G):
             print(s.model())
             # prevent next model from using the same assignment as a previous model
             s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
-        """
-        print(res.evaluate(get_formula_for_ensuring_ef1_list_new(
-            [a for aa in A for a in aa], V, n, m)))
 
-        for i in range(n):
-            for j in range(n):
-
-                if i == j:
-                    continue
-
-                print()
-                print("========== Agent %s ===========" % i)
-
-                # print(
-                #     [res.evaluate(If(a, 1, 0)*b) for a, b in zip(D[j][i], V[i])])
-                print("Agent %s sine verdier: %s" % (i,
-                                                     [res.eval(a) for a in V[i]]))
-                # Check that there is at least one evious agent once an item is possibly dropped
-                print("Should agent %s be jealous og agent %s? %s vs %s" % (i, j, res.evaluate(Sum([V[i][g] * If(A[i][g], 1, 0)
-                                                                                                   for g in range(m)])),
-                                                                            res.evaluate(Sum([V[i][g] * If(A[j][g], 1, 0)   # må fåf den til å skjønne at den beste skal legges bort
-                                                                                              # TODO dobbelsjekk om indeksene i D er riktige
-                                                                                              for g in range(m)]) - max_in_product_array(A[j], V[i]))  # Skal det geller være allokert i A?
-                                                                            #   for g in range(m)]) - max_in_product_array(D[i][j], V[i]))  # Skal det geller være allokert i A?
-                                                                            ))  # dette er sant når en agent oppfatter at verdien av sin egen bundle er mindre enn en annen sin
-                product = [a*b for a, b in zip(D[i][j], V[i])]
-                print("(med D) maks produkt for agent %s mot agent %s ble %s" %
-                      (i, j, res.evaluate(max_in_product_array(D[i][j], V[i]))))
-                print("(med A) maks produkt for agent %s mot agent %s ble %s" %
-                      (i, j, res.evaluate(max_in_product_array(A[j], V[i]))))
-                print("produkt-zippet blir det %s mot agent %s ble %s" %
-                      (i, j, [res.evaluate(p) for p in product]))"""
-
+    print()
+    print(valuation_function)
     print()
     return (is_sat == sat, valuation_function)
 
@@ -615,7 +420,7 @@ def find_valuation_function_with_no_ef1_v3(n, m, G):
         for j in range(m):
             s.add(V[i][j] >= 0)
 
-    s.add(get_formula_for_one_item_for_each_agent(A, n, m))
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_edge_conflicts(G, A, n))
     s.add(get_formula_for_ensuring_at_least_one_jealous_agent(A, D, V, n, m))
@@ -682,7 +487,7 @@ def find_valuation_function_with_no_ef1_v2(n, m, G):
     epsilon = Real("epsilon")
     o.maximize(epsilon)
 
-    s.add(get_formula_for_one_item_for_each_agent(A, n, m))
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
 
     # Make sure that there are no possible ways to allocate the items in a fair (ef1) manner
