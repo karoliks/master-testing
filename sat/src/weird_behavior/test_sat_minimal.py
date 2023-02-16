@@ -1,7 +1,6 @@
-import numpy as np
 from igraph import *
 
-from sat_minimal import find_valuation_function_with_no_ef1_not_working, find_valuation_function_with_no_ef1_working
+from weird_behavior.sat_minimal import find_valuation_function_with_no_ef1_not_working, find_valuation_function_with_no_ef1_working
 
 
 def test_sum():
