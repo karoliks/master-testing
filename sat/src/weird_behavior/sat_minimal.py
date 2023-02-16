@@ -59,8 +59,6 @@ def get_formula_for_one_item_to_one_agent(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
-        # TODO double check that this is correct order
-        # var <= her. skal det ikke være ==?
         formulas.append(Sum([If(A[i][g], 1, 0) for i in range(n)]) == 1)
 
     return And([formula for formula in formulas])
@@ -70,8 +68,6 @@ def get_formula_for_one_item_to_one_agent_list(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
-        # TODO double check that this is correct order
-        # var <= her. skal det ikke være ==?
         formulas.append(Sum([If(A[i*n+g], 1, 0) for i in range(n)]) == 1)
 
     return And([formula for formula in formulas])
@@ -152,9 +148,8 @@ def find_valuation_function_with_no_ef1_working(n, m, G):
     print(s.check())
     valuation_function = []
     is_sat = s.check()
-    if(s.check() == sat):
-        # print(s.model())
-        res = s.model()
+
+    if(is_sat == sat):
         m = s.model()
         tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples]
@@ -192,9 +187,8 @@ def find_valuation_function_with_no_ef1_not_working(n, m, G):
     print(s.check())
     valuation_function = []
     is_sat = s.check()
-    if(s.check() == sat):
-        # print(s.model())
-        res = s.model()
+
+    if(is_sat == sat):
         m = s.model()
         tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples]
