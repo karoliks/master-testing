@@ -1,4 +1,6 @@
 from z3 import *
+from igraph import *
+import numpy as np
 
 
 ### Helper functions ###
@@ -171,14 +173,96 @@ def find_valuation_function_with_no_ef1(n, m, G):
         tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples]
 
-        counter = 0
-        while s.check() == sat and counter < 15:
-            counter = counter+1
-            print(s.model())
-            # prevent next model from using the same assignment as a previous model
-            s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
+        # counter = 0
+        # while s.check() == sat and counter < 15:
+        #     counter = counter+1
+        #     print(s.model())
+        #     # prevent next model from using the same assignment as a previous model
+        #     s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
 
     print()
     print(valuation_function)
     print()
     return (is_sat == sat, valuation_function)
+
+
+def find_valuation_function_and_graph_with_no_ef1(n, m):
+    s = Solver()
+
+    G = Graph.Ring(n=3, circular=False)
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G.vcount(), "The number of items do not match the size of the graph"
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    # Valuations
+    V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
+         for i in range(n)]
+
+    G_test = [[Int("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+              for i in range(m)]
+
+    print("m", m)
+
+    # Make sure all values are non-negative
+    for i in range(n):
+        for j in range(m):
+            s.add(V[i][j] >= 0)
+
+    for i in range(m):
+        s.add(sum(G_test[i]) == 0)
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts(
+                    G, [[a for a in aa] for aa in A], n)),
+
+            Not(
+                get_formula_for_ensuring_ef1(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    )
+    )
+
+    print(s.check())
+    valuation_function = []
+    discovered_graph = []
+    is_sat = s.check()
+    matrix = [[]]
+    if(is_sat == sat):
+
+        mod = s.model()
+        print(mod)
+        tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
+        valuation_function = [d[1] for d in tuples[(m*m):len(tuples)]]
+        discovered_graph = [d[0]
+                            for d in tuples[0:(m*m)]]  # TODO fjerne hardkodet 2
+
+        # counter = 0
+        # while s.check() == sat and counter < 15:
+        #     counter = counter+1
+        #     print(s.model())
+        #     # prevent next model from using the same assignment as a previous model
+        #     s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
+
+    # make graph array into incidence matrix
+        matrix = np.array(discovered_graph)  # TODO fjerne hardkodet 2
+        matrix = np.reshape(matrix, (-1, m))
+
+    print()
+    print("valuation_function", valuation_function)
+    print("discovered_graph:", discovered_graph)
+    print()
+
+    graph = Graph.Adjacency(matrix=matrix, mode="max")
+
+    return (is_sat == sat, valuation_function, graph)
