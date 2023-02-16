@@ -244,25 +244,18 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
         print(mod)
         tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples[(m*m):len(tuples)]]
-        discovered_graph = [d[0]
+        discovered_graph = [d[1]
                             for d in tuples[0:(m*m)]]  # TODO fjerne hardkodet 2
 
-        # counter = 0
-        # while s.check() == sat and counter < 15:
-        #     counter = counter+1
-        #     print(s.model())
-        #     # prevent next model from using the same assignment as a previous model
-        #     s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
-
-    # make graph array into incidence matrix
-        matrix = np.array(discovered_graph)  # TODO fjerne hardkodet 2
-        matrix = np.reshape(matrix, (-1, m))
+        # make graph array into incidence matrix
+        # looks weird because z3 numbers cannot be used direclty as numbers, you have to convert them to longs
+        matrix = [[number.as_long() for number in discovered_graph[i:i+m]]
+                  for i in range(0, len(discovered_graph), m)]  # TODO fjerne hardkodet 2
 
     print()
     print("valuation_function", valuation_function)
-    print("discovered_graph:", discovered_graph)
-    print()
+    print("discovered_graph:", matrix)
 
-    graph = Graph.Adjacency(matrix=matrix, mode="max")
+    graph = Graph.Adjacency(matrix, mode="max")
 
     return (is_sat == sat, valuation_function, graph)
