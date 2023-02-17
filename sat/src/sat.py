@@ -42,6 +42,60 @@ def get_edge_conflicts(G, A, n):
     return And([conflict for conflict in conflicts])
 
 
+def get_edge_conflicts_adjacency_matrix(G, A, n, m):
+    formulas = []
+
+    # Enforce the conflicts from the graph
+    # Only looking at the lower half if the adjacency matrix due to it being symmetric.
+    # It is symmetric because conclift graphs are undirected
+    for row in range(m):
+        for col in range(row):
+            for i in range(n):
+                formulas.append(
+                    If(
+                        # If: there is an edge
+                        G[row][col],
+
+                        # Then: make sure that the same agent dont get the items in both ends
+                        ((If(A[i][row], 1, 0) + If(A[i][col], 1, 0)) <= 1),
+
+                        # Else: Do whatever
+                        True
+                    )
+                )
+
+    return And(formulas)
+
+
+def get_max_degree_less_than_agents(G, n, m):
+    formulas = []
+
+    for col in range(m):
+        num_edges_for_item = 0
+        for row in range(m):
+            num_edges_for_item = num_edges_for_item + If(G[row][col], 1, 0)
+        formulas.append(num_edges_for_item < n)
+
+    return And(formulas)
+
+
+"""As a adjacency matrix for an undirected graph is symmetric, the program
+really only have to worry about one side of the diagonal.
+This function will also make sure that the diagonal is zero, meaning there
+will be no self-loops."""
+
+
+def get_upper_half_zero(G, m):
+    formulas = []
+
+    for row in range(m):
+        for col in range(m):
+            if col >= row:
+                formulas.append(G[row][col] == False)
+
+    return And(formulas)
+
+
 def get_formula_for_correct_removing_of_items(A, D, n, m):
     formulas = []
 
@@ -189,11 +243,6 @@ def find_valuation_function_with_no_ef1(n, m, G):
 def find_valuation_function_and_graph_with_no_ef1(n, m):
     s = Solver()
 
-    G = Graph.Ring(n=3, circular=False)
-
-    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
-    assert m == G.vcount(), "The number of items do not match the size of the graph"
-
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
@@ -202,18 +251,17 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
     V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
          for i in range(n)]
 
-    G_test = [[Int("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
-              for i in range(m)]
-
-    print("m", m)
+    # Adjacency matrux for conlfict graph
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+         for i in range(m)]
 
     # Make sure all values are non-negative
     for i in range(n):
         for j in range(m):
             s.add(V[i][j] >= 0)
 
-    for i in range(m):
-        s.add(sum(G_test[i]) == 0)
+    s.add(get_upper_half_zero(G, m))
+    s.add(get_max_degree_less_than_agents(G, n, m))
 
     s.add(ForAll(
         [a for aa in A for a in aa],
@@ -222,16 +270,16 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
             And(
                 get_formula_for_one_item_to_one_agent(
                     [[a for a in aa] for aa in A], n, m),
-                get_edge_conflicts(
-                    G, [[a for a in aa] for aa in A], n)),
-
+                get_edge_conflicts_adjacency_matrix(
+                    G, [[a for a in aa] for aa in A], n, m)
+            ), 
+            
             Not(
                 get_formula_for_ensuring_ef1(
-                    [[a for a in aa] for aa in A], V, n, m)
+                [[a for a in aa] for aa in A], V, n, m)
+                )
             )
-        )
-    )
-    )
+        ))
 
     print(s.check())
     valuation_function = []
@@ -249,7 +297,7 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
 
         # make graph array into incidence matrix
         # looks weird because z3 numbers cannot be used direclty as numbers, you have to convert them to longs
-        matrix = [[number.as_long() for number in discovered_graph[i:i+m]]
+        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
                   for i in range(0, len(discovered_graph), m)]  # TODO fjerne hardkodet 2
 
     print()
