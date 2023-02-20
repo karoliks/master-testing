@@ -92,23 +92,15 @@ def test_send_valuations_for_checking_bipartite_minus_edge():
 
 
 def test_discover_valuations_and_graph():
-    # TODO test more complex problem later
-    # p = 4
-    # n = 5
-    # m = p*2
-
-    n = 2
-    m = 3
+    p = 3
+    n = 4
+    m = p*2
 
     result, V, graph = find_valuation_function_and_graph_with_no_ef1(
         n, m)
-    # V2 = np.array([V[0:8],
-    #               V[8:16],
-    #               V[16:24],
-    #               V[24:32],
-    #               V[32:40],
-    #                ])
-    V = np.array([V[0:3], V[3:6]])
+
+    V = np.array([[agent_vals for agent_vals in V[i:i+m]]
+                  for i in range(0, len(V), m)])
     plot(graph, target='from_z3.pdf')
 
     assert is_ef1_with_conflicts_possible(
