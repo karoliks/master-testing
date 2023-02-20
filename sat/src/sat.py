@@ -70,10 +70,16 @@ def get_edge_conflicts_adjacency_matrix(G, A, n, m):
 def get_max_degree_less_than_agents(G, n, m):
     formulas = []
 
-    for col in range(m):
+    for i in range(m):
         num_edges_for_item = 0
-        for row in range(m):
-            num_edges_for_item = num_edges_for_item + If(G[row][col], 1, 0)
+        for j in range(m):
+            if j > i:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[j][i], 1, 0)
+            else:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[i][j], 1, 0)
+
         formulas.append(num_edges_for_item < n)
 
     return And(formulas)
@@ -272,14 +278,14 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
                     [[a for a in aa] for aa in A], n, m),
                 get_edge_conflicts_adjacency_matrix(
                     G, [[a for a in aa] for aa in A], n, m)
-            ), 
-            
+            ),
+
             Not(
                 get_formula_for_ensuring_ef1(
-                [[a for a in aa] for aa in A], V, n, m)
-                )
+                    [[a for a in aa] for aa in A], V, n, m)
             )
-        ))
+        )
+    ))
 
     print(s.check())
     valuation_function = []
