@@ -55,6 +55,20 @@ def test_ef1_with_connectivity_when_it_exists():
         n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
 
 
+def test_ef1_with_connectivity_when_it_exists_2():
+    n = 2
+    m = 3
+
+    V = np.array([[1., 0., 1.], [1., 0., 1.]])
+
+    path = Graph.Ring(n=3, circular=False)
+    plot(path, target='path.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+
+
+
 def test_ef1_with_connectivity_when_it_is_not_guaranteed():
     n = 2
     m = 4
@@ -161,6 +175,7 @@ if __name__ == "__main__":
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
     test_ef1_with_connectivity_when_it_exists()
+    test_ef1_with_connectivity_when_it_exists_2()
     test_ef1_with_connectivity_when_it_is_not_guaranteed()
 
     print("Everything passed")
