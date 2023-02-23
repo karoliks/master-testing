@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_ef1_with_connectivity_possible
 
 
 def test_sum():
@@ -40,6 +40,33 @@ def test_ef1_with_conflicts():
         n, m, V_1, path) == False, "EF1 should not be possible in this case"
     assert is_ef1_with_conflicts_possible(
         n, m, V_2, path) == True, "EF1 should be possible in this case"
+
+
+def test_ef1_with_connectivity_when_it_exists():
+    n = 2
+    m = 6
+
+    V = np.array([[1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.]])
+
+    path = Graph.Ring(n=6, circular=False)
+    plot(path, target='path.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+
+
+def test_ef1_with_connectivity_when_it_is_not_guaranteed():
+    n = 2
+    m = 4
+
+    V = np.array([[1., 1., 1., 1.], [1., 1., 1., 1.]])
+
+    star = Graph.Star(n=4)
+    plot(star, target='star.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, star) == False, "EF1 should not be possible in this case (connected bundle, star)"
+
 
 
 def test_discover_bad_valuation_functions():
@@ -132,6 +159,8 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
-    test_discover_valuations_and_graph_and_agents()
+    # test_discover_valuations_and_graph_and_agents()
+    test_ef1_with_connectivity_when_it_exists()
+    test_ef1_with_connectivity_when_it_is_not_guaranteed()
 
     print("Everything passed")
