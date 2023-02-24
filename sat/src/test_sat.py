@@ -1,12 +1,28 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, is_ef1_possible, is_ef1_with_conflicts_possible
 
 
 def test_sum():
     assert sum([1, 2, 3]) == 6, "Should be 6"
 
+
+def test_efx_no_conflicts_1():
+    n = 2
+    m = 3
+    V = np.ones((n, m))
+
+    assert is_ef1_possible(
+        n, m, V) == True, "EF1 should be possible when there are no conflicts"
+
+
+def test_discover_bad_valuation_functions_efx_1():
+    n = 2
+    m = 3
+
+    assert find_valuation_function_with_no_efx(
+        n, m)[0] == False, "Should not be able to find a valuation function with no EF1 when there are two agents"
 
 def test_ef1_no_conflicts_1():
     n = 2
@@ -125,6 +141,8 @@ def test_discover_valuations_and_graph_and_agents():
 
 if __name__ == "__main__":
     test_sum()
+    test_efx_no_conflicts_1()
+    test_discover_bad_valuation_functions_efx_1()
     test_ef1_no_conflicts_1()
     test_ef1_no_conflicts_2()
     test_ef1_with_conflicts()
@@ -132,6 +150,6 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
-    test_discover_valuations_and_graph_and_agents()
+    # test_discover_valuations_and_graph_and_agents()
 
     print("Everything passed")
