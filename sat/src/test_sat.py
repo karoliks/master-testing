@@ -68,8 +68,7 @@ def test_ef1_with_connectivity_when_it_exists_2():
         n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
 
 
-
-def test_ef1_with_connectivity_when_it_is_not_guaranteed():
+def test_ef1_with_connectivity_when_it_does_not_exist():
     n = 2
     m = 4
 
@@ -80,7 +79,6 @@ def test_ef1_with_connectivity_when_it_is_not_guaranteed():
 
     assert is_ef1_with_connectivity_possible(
         n, m, V, star) == False, "EF1 should not be possible in this case (connected bundle, star)"
-
 
 
 def test_discover_bad_valuation_functions():
@@ -163,7 +161,6 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
-
 if __name__ == "__main__":
     test_sum()
     test_ef1_no_conflicts_1()
@@ -176,6 +173,6 @@ if __name__ == "__main__":
     # test_discover_valuations_and_graph_and_agents()
     test_ef1_with_connectivity_when_it_exists()
     test_ef1_with_connectivity_when_it_exists_2()
-    test_ef1_with_connectivity_when_it_is_not_guaranteed()
+    test_ef1_with_connectivity_when_it_does_not_exist()
 
     print("Everything passed")
