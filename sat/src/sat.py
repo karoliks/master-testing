@@ -41,6 +41,25 @@ def get_edge_conflicts(G, A, n):
 
     return And([conflict for conflict in conflicts])
 
+# TODO:: lage en test som sjekker ate denne funker riktig
+def get_edge_connectivity_formulas(G, A, n, m):
+
+    items_are_connected_to_something = []
+    for agent in range(n):
+        for i in range(m):
+            item_is_connected_to_something = []
+            for j in range(m):
+                item_is_connected_to_something.append(
+                    If(
+                        And(A[agent][i]),
+                        Or(bool(G[i][j]), bool(G[j][i])),
+                        True
+                    ))
+            items_are_connected_to_something.append(
+                Or(item_is_connected_to_something))
+
+    return And(items_are_connected_to_something)
+
 
 def get_edge_conflicts_adjacency_matrix(G, A, n, m):
     formulas = []
@@ -233,6 +252,26 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_formula_for_ensuring_ef1(A, V, n, m))
     s.add(get_edge_conflicts(G, A, n))
+
+    return s.check() == sat
+
+
+def is_ef1_with_connectivity_possible(n, m, V, G_graph):
+    s = Solver()
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G_graph.vcount(), "The number of items do not match the size of the graph"
+    assert m == V[0].size, "The number of items do not match the valuation function"
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    G = G_graph.get_adjacency()
+
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
+    s.add(get_edge_connectivity_formulas(G, A, n, m))
 
     return s.check() == sat
 
