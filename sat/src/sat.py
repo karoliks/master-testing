@@ -29,10 +29,14 @@ def max_in_product_array_bool(d_i_j, v_i):
 
 
 def min_in_product_array_bool(d_i_j, v_i):
-    product = [If(a, 1, 0)*b for a, b in zip(d_i_j, v_i)]
+    # Using nefative number for values not allocated to be able to distinguish
+    # between items between items with value equal to zero and items not allowed
+    # to check for (not allocated to this agent)
+    product = [If(a, b, -10) for a, b in zip(d_i_j, v_i)]
     m = product[0]
     for v in product[1:]:
-        m = If(v < m, v, m)
+        m = If(Or(And(v < m, v >= 0), m < 0), v, m)
+
     return m
 
 
@@ -198,7 +202,7 @@ def get_formula_for_ensuring_efx(A, V, n, m):
             formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
                             Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]))
 
-    return And([formula for formula in formulas])
+    return And(formulas)
 
 
 def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
@@ -240,7 +244,7 @@ def is_efx_possible(n, m, V):
          for i in range(n)]
 
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    s.add(get_formula_for_ensuring_ef1(A, V, n, m))
+    s.add(get_formula_for_ensuring_efx(A, V, n, m))
 
     return s.check() == sat
 

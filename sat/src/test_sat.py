@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible
 
 
 def test_sum():
@@ -13,8 +13,17 @@ def test_efx_no_conflicts_1():
     m = 3
     V = np.ones((n, m))
 
-    assert is_ef1_possible(
-        n, m, V) == True, "EF1 should be possible when there are no conflicts"
+    assert is_efx_possible(
+        n, m, V) == True, "EFX should be possible when the valuations are identical"
+
+
+def test_efx_no_conflicts_2():
+    n = 2
+    m = 3
+    V = np.array([[1, 2, 0], [3, 4, 0]])
+
+    assert is_efx_possible(
+        n, m, V) == True, "EFX should be possible when there are only two agents"
 
 
 def test_discover_bad_valuation_functions_efx_1():
@@ -22,7 +31,8 @@ def test_discover_bad_valuation_functions_efx_1():
     m = 3
 
     assert find_valuation_function_with_no_efx(
-        n, m)[0] == False, "Should not be able to find a valuation function with no EF1 when there are two agents"
+        n, m)[0] == False, "Should not be able to find a valuation function with no EFX when there are two agents"
+
 
 def test_ef1_no_conflicts_1():
     n = 2
