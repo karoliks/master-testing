@@ -27,8 +27,8 @@ def test_efx_no_conflicts_2():
 
 
 def test_discover_bad_valuation_functions_efx_1():
-    n = 2
-    m = 3
+    n = 4
+    m = 6
 
     assert find_valuation_function_with_no_efx(
         n, m)[0] == False, "Should not be able to find a valuation function with no EFX when there are two agents"
@@ -152,6 +152,7 @@ def test_discover_valuations_and_graph_and_agents():
 if __name__ == "__main__":
     test_sum()
     test_efx_no_conflicts_1()
+    test_efx_no_conflicts_2()
     test_discover_bad_valuation_functions_efx_1()
     test_ef1_no_conflicts_1()
     test_ef1_no_conflicts_2()

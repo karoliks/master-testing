@@ -273,6 +273,62 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
+def find_valuation_function_and_agents_with_no_efx(n, m):
+    s = Solver()
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    # Valuations
+    V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
+         for i in range(n)]
+
+    # Make sure all values are non-negative
+    for i in range(n):
+        for j in range(m):
+            s.add(V[i][j] >= 0)
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            get_formula_for_one_item_to_one_agent(
+                [[a for a in aa] for aa in A], n, m),
+
+            Not(
+                get_formula_for_ensuring_efx(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    )
+    )
+
+    print(s.check())
+    valuation_function = []
+    is_sat = s.check()
+
+    if(is_sat == sat):
+
+        m = s.model()
+        print(m)
+        tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
+        valuation_function = [d[1] for d in tuples]
+
+        # counter = 0
+        # while s.check() == sat and counter < 15:
+        #     counter = counter+1
+        #     print(s.model())
+        #     # prevent next model from using the same assignment as a previous model
+        #     s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
+
+    print()
+    print(valuation_function)
+    print()
+    return (is_sat == sat, valuation_function)
+
+
+
 def find_valuation_function_with_no_efx(n, m):
     s = Solver()
 
