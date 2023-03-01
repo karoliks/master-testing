@@ -20,8 +20,8 @@ def test_efx_no_conflicts_1():
 def test_efx_no_conflicts_2():
     n = 2
     m = 3
-    V = np.array([[1, 2, 0], [3, 4, 0]])
-
+    V = np.array([[1., 2., 0.], [3., 4., 0.]])
+    
     assert is_efx_possible(
         n, m, V) == True, "EFX should be possible when there are only two agents"
 
