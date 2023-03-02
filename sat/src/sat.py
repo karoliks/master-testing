@@ -27,6 +27,30 @@ def max_in_product_array_bool(d_i_j, v_i):
         m = If(v > m, v, m)
     return m
 
+# TODO not done yet
+
+
+def max_in_product_array_bool_outer_items(a_j, v_i, G, thief, victim):
+    product = [If(a, 1, 0)*b for a, b in zip(a_j, v_i)]
+    m = product[0]
+    for v in product[1:]:
+        m = If(v > m, v, m)
+
+    items_are_connected_to_something = []
+    for agent in range(n):
+        for i in range(m):
+            item_is_connected_to_something = []
+            for j in range(m):
+                item_is_connected_to_something.append(
+                    If(
+                        And(A[agent][i]),
+                        Or(bool(G[i][j]), bool(G[j][i])),
+                        True
+                    ))
+            items_are_connected_to_something.append(
+                Or(item_is_connected_to_something))
+
+
 
 def get_edge_conflicts(G, A, n):
     conflicts = []
@@ -59,6 +83,8 @@ def get_edge_connectivity_formulas(G, A, n, m):
                 Or(item_is_connected_to_something))
 
     return And(items_are_connected_to_something)
+
+# T)D) kanskje ikke bruke nabimatrise, men en fynskjon? https://stackoverflow.com/questions/72507692/z3-connected-components
 
 
 def get_edge_conflicts_adjacency_matrix(G, A, n, m):
@@ -195,6 +221,33 @@ def get_formula_for_ensuring_ef1(A, V, n, m):
 
     return And([formula for formula in formulas])
 
+# TODO fix denne er ikke riktig, men er god for å tenke gjennom til den andre funkjsonen
+
+
+def get_bundle_graph_for_agent(A, G, n, m):
+    for agent in range(n):
+        for row in range(m):
+            for col in range(row):
+                is_outer = If(Or(A[agent][row], A[agent][col]))
+
+            # A[n][m]
+
+
+def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
+    formulas = []
+
+    for i in range(n):
+        for j in range(n):
+
+            if i == j:
+                continue
+
+            # Check that there is no envy once an item is possibly dropped
+            formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
+
+    return And([formula for formula in formulas])
+
 
 def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
     formulas = []
@@ -255,7 +308,7 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
 
     return s.check() == sat
 
-
+# TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
 def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     s = Solver()
 
