@@ -129,12 +129,12 @@ def get_max_degree_less_than_agents(G, n, m):
     return And(formulas)
 
 
-"""As a adjacency matrix for an undirected graph is symmetric, the program
+"""
+As a adjacency matrix for an undirected graph is symmetric, the program
 really only have to worry about one side of the diagonal.
 This function will also make sure that the diagonal is zero, meaning there
-will be no self-loops."""
-
-
+will be no self-loops.
+"""
 def get_upper_half_zero(G, m):
     formulas = []
 
