@@ -161,6 +161,17 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
+def test_is_graph_connected():
+    graph = Graph.Ring(n=3, circular=False)
+    edges = graph.get_edgelist()
+    assert is_graph_connected(
+        graph) == True, "The path graph is connected, so the answer should be true."
+    graph.delete_edges([edges[0]])
+    plot(graph, target='not_connected.pdf')
+
+    assert is_graph_connected(
+        graph) == False, "The graph is not a connected component, so the answer should be false."
+
 if __name__ == "__main__":
     test_sum()
     test_ef1_no_conflicts_1()
@@ -171,8 +182,9 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
-    test_ef1_with_connectivity_when_it_exists()
-    test_ef1_with_connectivity_when_it_exists_2()
-    test_ef1_with_connectivity_when_it_does_not_exist()
+    # test_ef1_with_connectivity_when_it_exists()
+    # test_ef1_with_connectivity_when_it_exists_2()
+    # test_ef1_with_connectivity_when_it_does_not_exist()
+    test_is_graph_connected()
 
     print("Everything passed")

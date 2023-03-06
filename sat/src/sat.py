@@ -308,6 +308,56 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
 
     return s.check() == sat
 
+
+def is_graph_connected(graph):
+    B = BoolSort()
+    s = Solver()
+    NodeSort = Datatype('Node')
+
+    vertices = [v for v in range(graph.vcount())]
+
+    # Setup
+    #################
+    for vertex in vertices:
+        NodeSort.declare(str(vertex))
+    NodeSort = NodeSort.create()
+
+    vs = {}
+    for vertex in vertices:
+        vs[vertex] = getattr(NodeSort, str(vertex))
+
+    EdgeConection = Function('EdgeConection',
+                             NodeSort,
+                             NodeSort, B)
+    TC_EdgeConection = TransitiveClosure(EdgeConection)
+
+    # Make edges go both ways (since they are undirected)
+    x, y = Consts("x y", NodeSort)
+    s.add(ForAll([x, y], Implies(EdgeConection(x, y), EdgeConection(y, x))))
+
+    # Give information about the given graph
+    ###########################################
+    adjacency = graph.get_adjacency()
+
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            # Say where there is and where there is not edges in the graph
+            s.add(If(adjacency[vertex1][vertex2] == 1,
+                     EdgeConection(vs[vertex1], vs[vertex2]),
+                     Not(EdgeConection(vs[vertex1], vs[vertex2]))
+                     ))
+
+    # Check connectivity for whole graph by looking at the transitive closure
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            s.add(TC_EdgeConection(vs[vertex1], vs[vertex2]) == True)
+
+    return s.check() == sat
+
 # TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
 def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     s = Solver()
