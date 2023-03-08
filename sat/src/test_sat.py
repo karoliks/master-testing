@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
 
 
 def test_sum():
@@ -122,16 +122,48 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
+def test_discover_valuations_and_graph_and_agents_binary_vals():
+    p = 3
+    m = p*2
+
+    result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(
+        m)
+
+    plot(graph, target='from_z3.pdf')
+    V = np.array([[agent_vals for agent_vals in V[i:i+m]]
+                  for i in range(0, len(V), m)])
+
+    assert is_ef1_with_conflicts_possible(
+        n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+
+def test_discover_valuations_and_graph_and_agents_ternary_vals():
+    p = 3
+    m = p*2
+
+    result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(
+        m)
+
+    plot(graph, target='from_z3.pdf')
+    V = np.array([[agent_vals for agent_vals in V[i:i+m]]
+                  for i in range(0, len(V), m)])
+
+    assert is_ef1_with_conflicts_possible(
+        n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+
 
 if __name__ == "__main__":
-    test_sum()
-    test_ef1_no_conflicts_1()
-    test_ef1_no_conflicts_2()
-    test_ef1_with_conflicts()
+    # test_sum()
+    # test_ef1_no_conflicts_1()
+    # test_ef1_no_conflicts_2()
+    # test_ef1_with_conflicts()
     # test_discover_bad_valuation_functions()
     # test_send_valuations_for_checking()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
-    test_discover_valuations_and_graph_and_agents()
+    # test_discover_valuations_and_graph_and_agents()
+    # test_discover_valuations_and_graph_and_agents_binary_vals()
+    test_discover_valuations_and_graph_and_agents_ternary_vals()
 
     print("Everything passed")

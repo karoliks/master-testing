@@ -441,3 +441,169 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
     graph = Graph.Adjacency(matrix, mode="max")
 
     return (is_sat == sat, valuation_function, graph, n_int)
+
+
+def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
+    s = Solver()
+
+    n = Int("n")
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(m)]
+
+    # Valuations
+    V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
+         for i in range(m)]
+
+    # Adjacency matrux for conlfict graph
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+         for i in range(m)]
+
+    # Make sure all values are non-negative
+    for i in range(m):
+        for j in range(m):
+            s.add(V[i][j] >= 0)
+
+    # Forece the values to be binary
+    for i in range(m):
+        for j in range(m):
+            s.add(Or(V[i][j] == 1, V[i][j] == 0))
+
+    s.add(n < m)
+    # TODO: make the number of agents larger than the largest connected component of the graph
+    s.add(get_upper_half_zero(G, m))
+    s.add(get_max_degree_less_than_agents(G, n, m))
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent_uknown_agents(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts_adjacency_matrix_unknown_agents(
+                    G, [[a for a in aa] for aa in A], m)
+            ),
+
+            Not(
+                get_formula_for_ensuring_ef1_unknown_agents(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    ))
+
+    print(s.check())
+    valuation_function = []
+    discovered_graph = []
+    is_sat = s.check()
+    matrix = [[]]
+    n_int = 0
+    if(is_sat == sat):
+
+        mod = s.model()
+        n_int = mod[n].as_long()
+        print(mod)
+        tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
+        print([d[1] for d in tuples[(m*m):(len(tuples))]])
+
+        # plus one because n is now a part of the answer
+        valuation_function = [d[1] for d in tuples[(m*m+1):(m*m+n_int*m+1)]]
+        discovered_graph = [d[1]
+                            for d in tuples[0:(m*m)]]
+
+        # make graph array into incidence matrix
+        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
+                  for i in range(0, len(discovered_graph), m)]
+
+    print()
+    print("valuation_function", valuation_function)
+    print("discovered_graph:", matrix)
+
+    graph = Graph.Adjacency(matrix, mode="max")
+
+    return (is_sat == sat, valuation_function, graph, n_int)
+
+
+def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
+    s = Solver()
+
+    n = Int("n")
+    p = Int("p")
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(m)]
+
+    # Valuations
+    V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
+         for i in range(m)]
+
+    # Adjacency matrux for conlfict graph
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+         for i in range(m)]
+
+    # Make sure all values are non-negative
+    for i in range(m):
+        for j in range(m):
+            s.add(V[i][j] >= 0)
+
+    # Forece the values to be ternary
+    s.add(And(Not(p == 0), Not(p == 1), p > 0))
+    for i in range(m):
+        for j in range(m):
+            s.add(Or(V[i][j] == 1, V[i][j] == 0, V[i][j] == p))
+
+    s.add(n < m)
+    # TODO: make the number of agents larger than the largest connected component of the graph
+    s.add(get_upper_half_zero(G, m))
+    s.add(get_max_degree_less_than_agents(G, n, m))
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent_uknown_agents(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts_adjacency_matrix_unknown_agents(
+                    G, [[a for a in aa] for aa in A], m)
+            ),
+
+            Not(
+                get_formula_for_ensuring_ef1_unknown_agents(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    ))
+
+    print(s.check())
+    valuation_function = []
+    discovered_graph = []
+    is_sat = s.check()
+    matrix = [[]]
+    n_int = 0
+    if(is_sat == sat):
+
+        mod = s.model()
+        n_int = mod[n].as_long()
+        print(mod)
+        tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
+        print([d[1] for d in tuples[(m*m):(len(tuples))]])
+
+        # plus one because n is now a part of the answer
+        valuation_function = [d[1] for d in tuples[(m*m+1):(m*m+n_int*m+1)]]
+        discovered_graph = [d[1]
+                            for d in tuples[0:(m*m)]]
+
+        # make graph array into incidence matrix
+        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
+                  for i in range(0, len(discovered_graph), m)]
+
+    print()
+    print("valuation_function", valuation_function)
+    print("discovered_graph:", matrix)
+
+    graph = Graph.Adjacency(matrix, mode="max")
+
+    return (is_sat == sat, valuation_function, graph, n_int)
