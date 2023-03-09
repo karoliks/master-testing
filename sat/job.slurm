@@ -25,11 +25,14 @@ echo "Total of $SLURM_NTASKS cores"
 module purge
 module load Python/3.8.2-GCCcore-9.3.0
 ls
+pip list
+module list
 cd sat-cluster/
 source bin/activate
 pip install numpy
 pip install igraph
 pip install z3-solver
+pip list
 python ./master-testing/sat/src/test_sat.py
 
 uname -a
