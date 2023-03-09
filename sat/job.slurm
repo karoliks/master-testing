@@ -21,8 +21,10 @@ echo "We are using $SLURM_CPUS_ON_NODE cores"
 echo "We are using $SLURM_CPUS_ON_NODE cores per node"
 echo "Total of $SLURM_NTASKS cores"
 
+
 module purge
 module load Python/3.8.2-GCCcore-9.3.0
+ls
 cd sat-cluster/
 source bin/activate
 pip install numpy
