@@ -27,6 +27,7 @@ module load Python/3.8.2-GCCcore-9.3.0
 ls
 pip list
 module list
+echo "hei"
 cd sat-cluster/
 source bin/activate
 pip install numpy
