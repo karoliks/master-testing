@@ -22,7 +22,7 @@ echo "We are using $SLURM_CPUS_ON_NODE cores per node"
 echo "Total of $SLURM_NTASKS cores"
 
 
-source ../..bin/activate
+source ../../bin/activate
 python ./src/test_sat.py
 
 uname -a
