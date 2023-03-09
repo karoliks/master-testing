@@ -124,7 +124,7 @@ def test_discover_valuations_and_graph_and_agents():
 
 def test_discover_valuations_and_graph_and_agents_binary_vals():
     p = 3
-    m = p*2
+    m = 7
 
     result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(
         m)
@@ -164,6 +164,6 @@ if __name__ == "__main__":
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
     # test_discover_valuations_and_graph_and_agents_binary_vals()
-    test_discover_valuations_and_graph_and_agents_ternary_vals()
+    # test_discover_valuations_and_graph_and_agents_ternary_vals()
 
     print("Everything passed")
