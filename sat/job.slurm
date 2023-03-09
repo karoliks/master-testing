@@ -22,7 +22,12 @@ echo "We are using $SLURM_CPUS_ON_NODE cores per node"
 echo "Total of $SLURM_NTASKS cores"
 
 module purge
-module load Anaconda/2020.07
-python /path/to/file.py
+module load Python/3.8.2-GCCcore-9.3.0
+cd sat-cluster/
+source bin/activate
+pip install numpy
+pip install igraph
+pip install z3-solver
+python ./master-testing/sat/src/test_sat.py
 
-./src/test_sat.py
+uname -a
