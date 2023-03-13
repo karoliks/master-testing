@@ -111,6 +111,7 @@ def get_max_degree_less_than_agents(G, n, m):
 
 
 # TODO er ikke sikker på om dette garanterer sti, men det virker lovende
+# TODO OBSBS does not gurantee a path!! But it does allow forpaths
 def get_formula_for_path(G, m):
     formulas = []
 
