@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, matrix_path
 
 
 def test_sum():
@@ -152,6 +152,14 @@ def test_discover_valuations_and_graph_and_agents_ternary_vals():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
+def test_path():
+    m = 5
+
+    result, graph = matrix_path(m)
+
+    plot(graph, target='maybe_path.pdf')
+
+
 
 if __name__ == "__main__":
     # test_sum()
@@ -163,7 +171,8 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
-    test_discover_valuations_and_graph_and_agents_binary_vals()
+    # test_discover_valuations_and_graph_and_agents_only_paths()
     # test_discover_valuations_and_graph_and_agents_ternary_vals()
+    test_path()
 
     print("Everything passed")

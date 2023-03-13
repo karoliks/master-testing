@@ -110,6 +110,50 @@ def get_max_degree_less_than_agents(G, n, m):
     return And(formulas)
 
 
+# TODO er ikke sikker på om dette garanterer sti, men det virker lovende
+def get_formula_for_path(G, m):
+    formulas = []
+
+    num_total_edges = 0
+
+    for i in range(m):
+        num_edges_for_item = 0
+        for j in range(m):
+            if j > i:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[j][i], 1, 0)
+            else:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[i][j], 1, 0)
+
+        formulas.append(Or(num_edges_for_item == 1, num_edges_for_item == 2))
+        num_total_edges = num_total_edges + num_edges_for_item
+    # Each edge is counted twice because we look at the perspective of each node
+    num_total_edges = num_total_edges / 2
+    formulas.append(num_total_edges == m-1)
+    return And(formulas)
+
+
+def get_total_edges(G, m):
+
+    num_total_edges = 0
+
+    for i in range(m):
+        num_edges_for_item = 0
+        for j in range(m):
+            if j > i:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[j][i], 1, 0)
+            else:
+                num_edges_for_item = num_edges_for_item + \
+                    If(G[i][j], 1, 0)
+
+        num_total_edges = num_total_edges + num_edges_for_item
+    return num_total_edges / 2
+
+
+
+
 """As a adjacency matrix for an undirected graph is symmetric, the program
 really only have to worry about one side of the diagonal.
 This function will also make sure that the diagonal is zero, meaning there
@@ -607,3 +651,40 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
     graph = Graph.Adjacency(matrix, mode="max")
 
     return (is_sat == sat, valuation_function, graph, n_int)
+
+
+def matrix_path(m):
+    s = Solver()
+    # Adjacency matrux for conlfict graph
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+         for i in range(m)]
+    s.add(get_formula_for_path(G, m))
+    s.add(get_upper_half_zero(G, m))
+
+    is_sat = s.check()
+    print(is_sat)
+    matrix = [[]]
+    if(is_sat == sat):
+
+        mod = s.model()
+        print(mod)
+
+        print(mod.eval(get_total_edges(G, m)))
+
+        tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
+        print([d[1] for d in tuples[(m*m):(len(tuples))]])
+
+        discovered_graph = [d[1]
+                            for d in tuples[0:(m*m)]]
+
+        # make graph array into incidence matrix
+        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
+                  for i in range(0, len(discovered_graph), m)]
+
+    print()
+    print("discovered_graph:", matrix)
+
+    graph = Graph.Adjacency(matrix, mode="max")
+
+    return (is_sat == sat, graph)
+
