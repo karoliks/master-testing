@@ -536,3 +536,33 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
     graph = Graph.Adjacency(matrix, mode="max")
 
     return (is_sat == sat, valuation_function, graph, n_int)
+
+
+def is_path_always_ef1():
+    s = Solver()
+    # s.set("smt.string_solver", "seq")  # TODO er denne nyttig her?
+
+    IntSeqSort = SeqSort(IntSort())
+    SeqSeqSort = SeqSort(IntSeqSort)
+
+    n = Int("n")
+    m = Int("m")
+
+    values = Const("values", IntSeqSort)
+    allocation = Const("allocation", IntSeqSort)
+
+    s.add(Length(values) == n*m)
+    s.add(Length(allocation) == n*m)
+
+    # dummyIndex = FreshInt('dummyIndex')
+    # s.add(ForAll(dummyIndex, Implies(dummyIndex < n,
+    #                                  Length(allocation[dummyIndex]) == m)))
+    # s.add(Length(allocation[0]) == m)
+
+    s.add(n == 4)
+    s.add(m == 6)
+
+    print(s.check())
+    if(s.check() == sat):
+        print(s.model())
+    return True
