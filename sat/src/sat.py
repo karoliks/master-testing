@@ -2,8 +2,7 @@ from z3 import *
 from igraph import *
 import numpy as np
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_total_edges, get_upper_half_zero
-
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_total_edges, get_upper_half_zero
 
 
 ################################################################
@@ -459,8 +458,11 @@ def matrix_path(m):
     return (is_sat == sat, graph)
 
 # TODO:når jeg ikke har et -varianel t antall ting så er det vel ingengrunn til å lete etter en graf? kanvel bare gi den inn?
+
+
 def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
     s = Solver()
+    print()
     print("m:", m)
 
     n = Int("n")
@@ -473,21 +475,15 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
     V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
          for i in range(m)]
 
-    # Adjacency matrux for conlfict graph
-    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
-         for i in range(m)]
-
     # Make sure all values are non-negative
     for i in range(m):
         for j in range(m):
             s.add(V[i][j] >= 0)
 
     s.add(n < m)
-    s.add(n == 2)
-    # TODO: make the number of agents larger than the largest connected component of the graph
-    s.add(get_upper_half_zero(G, m))
-    s.add(get_max_degree_less_than_agents(G, n, m))
-    s.add(get_formula_for_path(G, m))
+    # max degree of graph should be less than the number of agents (path has max degree equal to two)
+    s.add(2 < n)
+   
     s.add(ForAll(
         [a for aa in A for a in aa],
         Implies(
@@ -495,8 +491,8 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
             And(
                 get_formula_for_one_item_to_one_agent_uknown_agents(
                     [[a for a in aa] for aa in A], n, m),
-                get_edge_conflicts_adjacency_matrix_unknown_agents(
-                    G, [[a for a in aa] for aa in A], m)
+                get_edge_conflicts_path_array(
+                    [[a for a in aa] for aa in A], m, n)
             ),
 
             Not(
@@ -508,9 +504,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
 
     print(s.check())
     valuation_function = []
-    discovered_graph = []
     is_sat = s.check()
-    matrix = [[]]
     n_int = 0
     if(is_sat == sat):
 
@@ -522,21 +516,11 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
         print([d[1] for d in tuples[(m*m):(len(tuples))]])
 
         # plus one because n is now a part of the answer
-        valuation_function = [d[1] for d in tuples[(m*m+1):(m*m+n_int*m+1)]]
-        discovered_graph = [d[1]
-                            for d in tuples[0:(m*m)]]
+        valuation_function = [d[1] for d in tuples[(1):(n_int*m+1)]]
 
-        # make graph array into incidence matrix
-        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
-                  for i in range(0, len(discovered_graph), m)]
-
-    print()
     print("valuation_function", valuation_function)
-    print("discovered_graph:", matrix)
 
-    graph = Graph.Adjacency(matrix, mode="max")
-
-    return (is_sat == sat, valuation_function, graph, n_int)
+    return (is_sat == sat, valuation_function, n_int)
 
 # TODO:når jeg ikke har et -varianel t antall ting så er det vel ingengrunn til å lete etter en graf? kanvel bare gi den inn?
 
@@ -564,7 +548,6 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycl
             s.add(V[i][j] >= 0)
 
     s.add(n < m)
-    s.add(n == 2)
     # TODO: make the number of agents larger than the largest connected component of the graph
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))

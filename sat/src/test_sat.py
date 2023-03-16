@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path
 
 
 def test_sum():
@@ -122,11 +122,11 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
-def test_discover_valuations_and_graph_and_agents_only_paths():
+def test_discover_valuations_and_graph_and_agents_only_paths_and_cycles():
     for m in range(4, 60):
 
-        result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(
-        m)
+        result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles(
+            m)
 
     # plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
     #      vertex_color='#bcf6f7')
@@ -135,6 +135,23 @@ def test_discover_valuations_and_graph_and_agents_only_paths():
 
     # assert is_ef1_with_conflicts_possible(
     #     n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+
+def test_discover_valuations_and_graph_and_agents_only_paths():
+    for m in range(3, 60):
+
+        result, V, n = find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(
+            m)
+
+        # V = np.array([[agent_vals for agent_vals in V[i:i+m]]
+        #               for i in range(0, len(V), m)])
+
+        # path = Graph.Ring(n=m, circular=False)
+
+        # assert is_ef1_with_conflicts_possible(
+        #     n, m, V, path) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+    # plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
+    #      vertex_color='#bcf6f7')
 
 
 def test_discover_valuations_and_graph_and_agents_binary_vals():
@@ -189,9 +206,9 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
-    # test_discover_valuations_and_graph_and_agents_only_paths()
+    test_discover_valuations_and_graph_and_agents_only_paths()
     # test_discover_valuations_and_graph_and_agents_ternary_vals()
     # test_path()
     # test_is_path_always_ef1()
-    test_discover_valuations_and_graph_and_agents_only_paths()
+    # test_discover_valuations_and_graph_and_agents_only_paths_and_cycles()
     print("Everything passed")
