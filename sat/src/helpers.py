@@ -91,6 +91,23 @@ def get_edge_conflicts_adjacency_matrix_unknown_agents(G, A, m):
     return And(formulas)
 
 
+def get_edge_conflicts_path_array(A, m, n):
+    formulas = []
+
+    for row in range(m):
+        for col in range(m-1):
+            # It is not allowed to have two items next to each other in the path
+            formulas.append(
+                Not(
+                    And(
+                        A[row][col], A[row][col+1]
+                    ))
+
+            )
+
+    return And(formulas)
+
+
 def get_max_degree_less_than_agents(G, n, m):
     formulas = []
 
