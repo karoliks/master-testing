@@ -50,6 +50,68 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
+def get_mms_for_this_agent(agent_i, n, m, V, G):
+    formulas = []
+    # TODO hvilket tall? og vanlig variabel eller z3 variabel?
+    mms = Int("mms_%s" % agent_i)
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, agent_i)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
+         for i in range(n)]
+
+    for i in range(n):
+        formulas.append(mms <= Sum(
+            [If(A[i][g], V[agent_i][g], 0) for g in range(m)]))  # look at agent_is values, because this is from her point of view
+
+    opt = Optimize()
+    opt.add(And(formulas))
+    opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    opt.add(get_edge_conflicts(G, A, n))
+    opt.maximize(mms)
+    print(opt.check())
+    mod = opt.model()
+    print(mod[mms])
+
+    return mod[mms]
+
+# TODO skrive ferdig
+
+
+def maximin_shares(n, m, V, G):
+    s = Solver()
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G.vcount(), "The number of items do not match the size of the graph"
+    assert m == V[0].size, "The number of items do not match the valuation function"
+
+    X = [[Int("x_%s_%s" % (i+1, j+1)) for j in range(m)]  # TODO  skal det være int eller bool eller float? hva er x egentlig?
+         for i in range(n)]  # TDOD bytte om på rekkefølge på items og agents?
+
+    # individual_mms = [[Int("individ_mms_%s_%s" % (i+1, j+1)) for j in range(m)] # TODO  skal det være int eller bool eller float? hva er x egentlig?
+    #      for i in range(n)] #
+
+    individual_mms = [Int("mms_agent_%s" % (i+1)) for i in range(n)]
+
+    for i in range(n):
+        s.add(individual_mms[i] == get_mms_for_this_agent(i, n, m, V, G))
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    # TODO: remove all use of D?
+    # D keepstrack of items that are dropped when checking for Ef1
+    D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
+          for j in range(n)] for k in range(n)]
+
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
+    s.add(get_formula_for_ensuring_ef1(A, V, n, m))
+    s.add(get_edge_conflicts(G, A, n))
+
+    return s.check() == sat
+
+
 def find_valuation_function_with_no_ef1(n, m, G):
     s = Solver()
 
