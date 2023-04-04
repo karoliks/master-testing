@@ -1,8 +1,11 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_and_graph_with_no_ef1_restricted_graph, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path
+# import torch
 
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# print(f'Device is: {device}')
 
 def test_sum():
     assert sum([1, 2, 3]) == 6, "Should be 6"
@@ -92,16 +95,40 @@ def test_send_valuations_for_checking_bipartite_minus_edge():
 
 
 def test_discover_valuations_and_graph():
-    p = 3
+    # p = 3
     n = 4
-    m = p*2
+    m = 7
 
     result, V, graph = find_valuation_function_and_graph_with_no_ef1(
         n, m)
 
-    plot(graph, target='from_z3.pdf')
+    plot(graph, target='from_z3_7i.pdf', vertex_label=range(m), vertex_size=32,
+         vertex_color='#bcf6f7')
     V = np.array([[agent_vals for agent_vals in V[i:i+m]]
                   for i in range(0, len(V), m)])
+
+    print("graph:", graph.get_adjacency())
+    print("v", V)
+
+    assert is_ef1_with_conflicts_possible(
+        n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+
+def test_discover_valuations_and_restricted_graph():
+    # p = 3
+    n = 5
+    m = 8
+
+    result, V, graph = find_valuation_function_and_graph_with_no_ef1_restricted_graph(
+        n, m)
+
+    plot(graph, target='from_z3_8i_restr.pdf', vertex_label=range(m), vertex_size=32,
+         vertex_color='#bcf6f7')
+    V = np.array([[agent_vals for agent_vals in V[i:i+m]]
+                  for i in range(0, len(V), m)])
+
+    print("graph:", graph.get_adjacency())
+    print("v", V)
 
     assert is_ef1_with_conflicts_possible(
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
@@ -109,12 +136,13 @@ def test_discover_valuations_and_graph():
 
 def test_discover_valuations_and_graph_and_agents():
     p = 3
-    m = p*2
+    m = 7
 
     result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1(
         m)
 
-    plot(graph, target='from_z3.pdf')
+    plot(graph, target='from_z3_7i.pdf', vertex_label=range(m), vertex_size=32,
+         vertex_color='#bcf6f7')
     V = np.array([[agent_vals for agent_vals in V[i:i+m]]
                   for i in range(0, len(V), m)])
 
@@ -205,8 +233,9 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
+    test_discover_valuations_and_restricted_graph()
     # test_discover_valuations_and_graph_and_agents()
-    test_discover_valuations_and_graph_and_agents_only_paths()
+    # test_discover_valuations_and_graph_and_agents_only_paths()
     # test_discover_valuations_and_graph_and_agents_ternary_vals()
     # test_path()
     # test_is_path_always_ef1()
