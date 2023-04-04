@@ -2,7 +2,7 @@ from z3 import *
 from igraph import *
 import numpy as np
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_total_edges, get_upper_half_zero
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_one_degree_two_less_than_agents, get_total_edges, get_upper_half_zero
 
 
 ################################################################
@@ -132,6 +132,76 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
 
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts_adjacency_matrix(
+                    G, [[a for a in aa] for aa in A], n, m)
+            ),
+
+            Not(
+                get_formula_for_ensuring_ef1(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    ))
+
+    print(s.check())
+    valuation_function = []
+    discovered_graph = []
+    is_sat = s.check()
+    matrix = [[]]
+    if(is_sat == sat):
+
+        mod = s.model()
+        print(mod)
+        tuples = sorted([(d, mod[d]) for d in mod], key=lambda x: str(x[0]))
+        valuation_function = [d[1] for d in tuples[(m*m):len(tuples)]]
+        discovered_graph = [d[1]
+                            for d in tuples[0:(m*m)]]  # TODO fjerne hardkodet 2
+
+        # make graph array into incidence matrix
+        # looks weird because z3 numbers cannot be used direclty as numbers, you have to convert them to longs
+        matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
+                  for i in range(0, len(discovered_graph), m)]  # TODO fjerne hardkodet 2
+
+    print()
+    print("valuation_function", valuation_function)
+    print("discovered_graph:", matrix)
+
+    graph = Graph.Adjacency(matrix, mode="max")
+
+    return (is_sat == sat, valuation_function, graph)
+
+
+def find_valuation_function_and_graph_with_no_ef1_restricted_graph(n, m):
+    s = Solver()
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    # Valuations
+    V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
+         for i in range(n)]
+
+    # Adjacency matrux for conlfict graph
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+         for i in range(m)]
+
+    # Make sure all values are non-negative
+    for i in range(n):
+        for j in range(m):
+            s.add(V[i][j] >= 0)
+
+    s.add(get_upper_half_zero(G, m))
+    s.add(get_max_degree_less_than_agents(G, n, m))
+    s.add(get_one_degree_two_less_than_agents(G, n, m))
 
     s.add(ForAll(
         [a for aa in A for a in aa],
