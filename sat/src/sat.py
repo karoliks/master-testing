@@ -97,31 +97,11 @@ def maximin_shares(n, m, V, G):
     assert m == G.vcount(), "The number of items do not match the size of the graph"
     assert m == V[0].size, "The number of items do not match the valuation function"
 
-    # TODO skal dette være python eller z3 variabler?
-    scaled_V = [[Real("scaled_v_%s_%s" % (i+1, j+1)) for j in range(m)]  # TODO  skal det være int eller bool eller float? hva er x egentlig?
-         for i in range(n)]  # TDOD bytte om på rekkefølge på items og agents?
-
-    # individual_mms = [[Int("individ_mms_%s_%s" % (i+1, j+1)) for j in range(m)] # TODO  skal det være int eller bool eller float? hva er x egentlig?
-    #      for i in range(n)] #
-
     individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
     alpha_mms_agents = [Real("alpha_agent_%s" % (i+1)) for i in range(n)]
 
     for i in range(n):
         individual_mms[i] = get_mms_for_this_agent(i, n, m, V, G)
-
-    for i in range(n):
-        for g in range(m):
-            # TODO skal det være s.add her?
-            # scaling values. Now, if we maximize the bundle value for the agent that recives the worst bundle,
-            # we know that all other agents must get a value for a bundle that is closer to (or higher than) their
-            # mms value
-            # TODO riktig? If an agent erecives a bundles of value 1 or more, they are happy form the mms pov
-            # TODO: ta hån dom 0-mms-verdier, siden vi deler på mms
-            # TODO hva skjer her?
-            # TODO ok handling of divide by zero?
-            scaled_V[i][g] = If(individual_mms[i] != 0, V[i]
-                                [g] / individual_mms[i], 1)  # TODO blir sikkert unknown siden denne delingen ikke gjør stykket lineært
 
 
 
@@ -143,20 +123,11 @@ def maximin_shares(n, m, V, G):
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
     opt.add(get_edge_conflicts(G, A, n))
 
-    # optimization_requirements, lowest_scaled_bundle_value = get_value_to_optimize(
-    #     n, m, scaled_V, G, A)
-    # opt.add(optimization_requirements)
 
-    # opt.maximize(lowest_scaled_bundle_value)
     print(opt.check())
     mod = opt.model()
-    # print(mod[lowest_scaled_bundle_value])
     print(mod)
 
-    # s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    # s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
-    # s.add(get_formula_for_ensuring_ef1(A, V, n, m))
-    # s.add(get_edge_conflicts(G, A, n))
     for i in range(n):
         print("hei")
         print(mod.eval(alpha_mms_agents[i]))
