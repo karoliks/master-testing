@@ -94,7 +94,8 @@ def maximin_shares(n, m, V, G):
     s = Solver()
 
     # Make sure that the number of nodes in the graph matches the number of items and the valuation function
-    assert m == G.vcount(), "The number of items do not match the size of the graph"
+    assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
+        str(m)+" nodes: "+str(G.vcount())
     assert m == V[0].size, "The number of items do not match the valuation function"
 
     individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
@@ -116,8 +117,10 @@ def maximin_shares(n, m, V, G):
     opt = Optimize()
 
     for i in range(n):
-        opt.add_soft(individual_mms[i] <= Sum(
-            [If(A[i][g], V[i][g], 0) for g in range(m)]))
+        bundle_value = Sum(
+            [If(A[i][g], V[i][g], 0) for g in range(m)])
+        opt.add_soft(individual_mms[i] <= bundle_value)
+        opt.maximize(bundle_value)
         # TODO maximere bundle-verdiene i tillegg?
 
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
@@ -127,9 +130,9 @@ def maximin_shares(n, m, V, G):
     print(opt.check())
     mod = opt.model()
     print(mod)
-
+    
     for i in range(n):
-        print("hei")
+        print("alpha agent",i)
         print(mod.eval(alpha_mms_agents[i]))
 
     return
