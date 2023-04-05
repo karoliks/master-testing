@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares
 
 
 def test_sum():
@@ -46,16 +46,17 @@ def test_mms_with_conflicts():
     n = 2
     m = 3
 
-    V_1 = np.array([[1., 0., 1.], [1., 0., 1.]])
+    V_1 = np.array([[1., 1., 1.], [1., 0., 1.]])
     V_2 = np.array([[1., 1., 1.], [1., 1., 1.]])
 
     path = Graph.Ring(n=3, circular=False)
     plot(path, target='path.pdf')
 
-    get_mms_for_this_agent(
-        0, n, m, V_1, path)
-    get_mms_for_this_agent(
-        1, n, m, V_2, path)
+    # get_mms_for_this_agent(
+    #     0, n, m, V_1, path)
+    # get_mms_for_this_agent(
+    #     1, n, m, V_1, path)
+    maximin_shares(n, m, V_1, path)
 
 
 def test_discover_bad_valuation_functions():

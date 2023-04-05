@@ -50,18 +50,18 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
-def get_mms_for_this_agent(agent_i, n, m, V, G):
+def get_mms_for_this_agent(this_agent, n, m, V, G):
     formulas = []
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
-    mms = Int("mms_%s" % agent_i)
+    mms = Real("mms_%s" % this_agent)
 
     # A  keeps track of the allocated items
-    A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, agent_i)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
+    A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, this_agent)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
          for i in range(n)]
 
     for i in range(n):
         formulas.append(mms <= Sum(
-            [If(A[i][g], V[agent_i][g], 0) for g in range(m)]))  # look at agent_is values, because this is from her point of view
+            [If(A[i][g], V[this_agent][g], 0) for g in range(m)]))  # look at this_agents values, because this is from her point of view
 
     opt = Optimize()
     opt.add(And(formulas))
@@ -70,9 +70,22 @@ def get_mms_for_this_agent(agent_i, n, m, V, G):
     opt.maximize(mms)
     print(opt.check())
     mod = opt.model()
+    print(mod)
     print(mod[mms])
 
     return mod[mms]
+
+
+def get_value_to_optimize(n, m, scaled_V, G, A):
+    formulas = []
+    # TODO hvilket tall? og vanlig variabel eller z3 variabel?
+    lowest_scaled_bundle_value = Real("lowest_scaled_bundle_value")
+
+    for i in range(n):
+        formulas.append(lowest_scaled_bundle_value <= Sum(
+            [If(A[i][g], scaled_V[i][g], 0) for g in range(m)]))  # look at this_agents values, because this is from her point of view
+
+    return And(formulas), lowest_scaled_bundle_value
 
 # TODO skrive ferdig
 
@@ -84,32 +97,56 @@ def maximin_shares(n, m, V, G):
     assert m == G.vcount(), "The number of items do not match the size of the graph"
     assert m == V[0].size, "The number of items do not match the valuation function"
 
-    X = [[Int("x_%s_%s" % (i+1, j+1)) for j in range(m)]  # TODO  skal det være int eller bool eller float? hva er x egentlig?
+    # TODO skal dette være python eller z3 variabler?
+    scaled_V = [[Real("scaled_v_%s_%s" % (i+1, j+1)) for j in range(m)]  # TODO  skal det være int eller bool eller float? hva er x egentlig?
          for i in range(n)]  # TDOD bytte om på rekkefølge på items og agents?
 
     # individual_mms = [[Int("individ_mms_%s_%s" % (i+1, j+1)) for j in range(m)] # TODO  skal det være int eller bool eller float? hva er x egentlig?
     #      for i in range(n)] #
 
-    individual_mms = [Int("mms_agent_%s" % (i+1)) for i in range(n)]
+    individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
 
     for i in range(n):
-        s.add(individual_mms[i] == get_mms_for_this_agent(i, n, m, V, G))
+        individual_mms[i] = get_mms_for_this_agent(i, n, m, V, G)
+
+    for i in range(n):
+        for g in range(m):
+            # TODO skal det være s.add her?
+            # scaling values. Now, if we maximize the bundle value for the agent that recives the worst bundle,
+            # we know that all other agents must get a value for a bundle that is closer to (or higher than) their
+            # mms value
+            # TODO riktig? If an agent erecives a bundles of value 1 or more, they are happy form the mms pov
+            # TODO: ta hån dom 0-mms-verdier, siden vi deler på mms
+            # TODO hva skjer her?
+            # TODO ok handling of divide by zero?
+            scaled_V[i][g] = If(individual_mms[i] != 0, V[i]
+                                [g] / individual_mms[i], 1)  # TODO blir sikkert unknown siden denne delingen ikke gjør stykket lineært
 
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
 
-    # TODO: remove all use of D?
-    # D keepstrack of items that are dropped when checking for Ef1
-    D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
-          for j in range(n)] for k in range(n)]
+    opt = Optimize()
 
-    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
-    s.add(get_formula_for_ensuring_ef1(A, V, n, m))
-    s.add(get_edge_conflicts(G, A, n))
+    opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    opt.add(get_edge_conflicts(G, A, n))
 
-    return s.check() == sat
+    optimization_requirements, lowest_scaled_bundle_value = get_value_to_optimize(
+        n, m, scaled_V, G, A)
+    opt.add(optimization_requirements)
+
+    opt.maximize(lowest_scaled_bundle_value)
+    print(opt.check())
+    mod = opt.model()
+    print(mod[lowest_scaled_bundle_value])
+    print(mod)
+
+    # s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    # s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
+    # s.add(get_formula_for_ensuring_ef1(A, V, n, m))
+    # s.add(get_edge_conflicts(G, A, n))
+
+    return mod[lowest_scaled_bundle_value]
 
 
 def find_valuation_function_with_no_ef1(n, m, G):
