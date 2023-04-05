@@ -46,7 +46,7 @@ def test_mms_with_conflicts():
     n = 2
     m = 3
 
-    V_1 = np.array([[1., 1., 1.], [1., 0., 1.]])
+    V_1 = np.array([[1., 3., 1.], [1., 0., 1.]])
     V_2 = np.array([[1., 1., 1.], [1., 1., 1.]])
 
     path = Graph.Ring(n=3, circular=False)

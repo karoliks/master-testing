@@ -105,6 +105,7 @@ def maximin_shares(n, m, V, G):
     #      for i in range(n)] #
 
     individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
+    alpha_mms_agents = [Real("alpha_agent_%s" % (i+1)) for i in range(n)]
 
     for i in range(n):
         individual_mms[i] = get_mms_for_this_agent(i, n, m, V, G)
@@ -122,31 +123,45 @@ def maximin_shares(n, m, V, G):
             scaled_V[i][g] = If(individual_mms[i] != 0, V[i]
                                 [g] / individual_mms[i], 1)  # TODO blir sikkert unknown siden denne delingen ikke gjør stykket lineært
 
+
+
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
 
+    for i in range(n):
+        alpha_mms_agents[i] = If(individual_mms[i] > 0, Sum([If(
+            A[i][g], V[i][g], 0) for g in range(m)]) / individual_mms[i], 1)
+
     opt = Optimize()
+
+    for i in range(n):
+        opt.add_soft(individual_mms[i] <= Sum(
+            [If(A[i][g], V[i][g], 0) for g in range(m)]))
+        # TODO maximere bundle-verdiene i tillegg?
 
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
     opt.add(get_edge_conflicts(G, A, n))
 
-    optimization_requirements, lowest_scaled_bundle_value = get_value_to_optimize(
-        n, m, scaled_V, G, A)
-    opt.add(optimization_requirements)
+    # optimization_requirements, lowest_scaled_bundle_value = get_value_to_optimize(
+    #     n, m, scaled_V, G, A)
+    # opt.add(optimization_requirements)
 
-    opt.maximize(lowest_scaled_bundle_value)
+    # opt.maximize(lowest_scaled_bundle_value)
     print(opt.check())
     mod = opt.model()
-    print(mod[lowest_scaled_bundle_value])
+    # print(mod[lowest_scaled_bundle_value])
     print(mod)
 
     # s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     # s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     # s.add(get_formula_for_ensuring_ef1(A, V, n, m))
     # s.add(get_edge_conflicts(G, A, n))
+    for i in range(n):
+        print("hei")
+        print(mod.eval(alpha_mms_agents[i]))
 
-    return mod[lowest_scaled_bundle_value]
+    return
 
 
 def find_valuation_function_with_no_ef1(n, m, G):
