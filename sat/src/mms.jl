@@ -66,9 +66,10 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
     if check(opt) == Z3.sat
         for (k, v) in consts(mod)
             if string(k) == string(mms)
-                # println(typeof(v))
-                # println("$k = $((get_decimal_string(v)))" )
-                ans = v#parse(Float64, string(eval(v))) # TODO better conversion
+                # println(typeof(Z3_get_numeral_decimal_string(v)))
+                println("isreal: ",is_real(v))
+                println("$k = $((get_decimal_string(v, 3)))" )
+                ans = parse(Float64,get_decimal_string(v, 3))#parse(Float64, string(eval(v))) # TODO better conversion
                 # ans = real_val(ctx,v)
             end
         end
@@ -86,11 +87,12 @@ function maximin_shares(n, m, V, G)
     individual_mms = []
     
     for i in 1:n
+        println("mms i: ", i, " n: ", n)
         push!(individual_mms,get_mms_for_this_agent(i, n, m, V, G))
         # println(typeof(individual_mms[i]))
-        if typeof(individual_mms[i]) != Z3.Real 
-            return false
-        end
+        # if typeof(individual_mms[i]) != Z3.ExprAllocated 
+        #     return false
+        # end
     end    
     
     ctx = Context()
@@ -101,7 +103,8 @@ function maximin_shares(n, m, V, G)
          for i in 1:n]
 
     for i in 1:n
-        alpha_mms_agents[i] = ite(bool_val(ctx,individual_mms[i] > 0), sum([ite(
+        # println(typeof(individual_mms[i] > real_val(ctx,0)))
+        alpha_mms_agents[i] = ite(bool_val(ctx,(individual_mms[i] > 0)), sum([ite(
             A[i][g], real_val(ctx,V[i,g]), real_val(ctx,0)) for g in 1:m]) / individual_mms[i], real_val(ctx,1))
     end
 
