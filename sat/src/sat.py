@@ -53,7 +53,7 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
 def get_mms_for_this_agent_int(this_agent, n, m, V, G):
     formulas = []
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
-    mms = Real("mms_%s" % this_agent)
+    mms = Int("mms_%s" % this_agent)
 
     # A  keeps track of the allocated items
     A = [[Int("a_%s_%s_mms_calculation_%s" % (i+1, j+1, this_agent)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
@@ -66,13 +66,13 @@ def get_mms_for_this_agent_int(this_agent, n, m, V, G):
     for i in range(n):
         formulas.append(mms <= Sum(
             [
-                
-                # If(A[i][g], 
+
+                # If(A[i][g],
                 V[this_agent][g] * A[i][g]
-                # , 0) 
-                 for g in range(m)
-                 
-                 ]))  # look at this_agents values, because this is from her point of view
+                # , 0)
+                for g in range(m)
+
+            ]))  # look at this_agents values, because this is from her point of view
 
     opt = Optimize()
     opt.set("timeout", 20000)  # TODO increase timeout
@@ -89,34 +89,35 @@ def get_mms_for_this_agent_int(this_agent, n, m, V, G):
 
     return mod[mms]
 
-
 def get_mms_for_this_agent(this_agent, n, m, V, G):
-    formulas = []
+    set_param("parallel.enable", True)
+    opt = Optimize()
+    opt.set("timeout", 100000)  # TODO increase timeout
+
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
-    mms = Real("mms_%s" % this_agent)
+    mms = Int("mms_%s" % this_agent)
 
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, this_agent)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
          for i in range(n)]
+    # opt.add(mms < np.sum(V[this_agent]))
 
     for i in range(n):
-        formulas.append(mms <= Sum(
+        other_agents_bundle_value = Int("other_agents_bundle_value_%s" % i)
+        opt.add(other_agents_bundle_value == Sum(
             [
-                
-                If(A[i][g], 
-                V[this_agent][g]
-                , 0) 
-                 for g in range(m)
-                 
-                 ]))  # look at this_agents values, because this is from her point of view
+                If(A[i][g],
+                   V[this_agent][g], 0)
+                for g in range(m)
+            ]))
+        # look at this_agents values, because this is from her point of view
+        opt.add(mms <= other_agents_bundle_value)
 
-    opt = Optimize()
-    opt.set("timeout", 40000)  # TODO increase timeout
-    opt.add(And(formulas))
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
     opt.add(get_edge_conflicts(G, A, n))
     opt.maximize(mms)
     res = opt.check()
+    print("mms this agent:", res)
     if res == unknown:
         print("Unknown, reason: %s" % opt.reason_unknown())
     mod = opt.model()
@@ -126,22 +127,70 @@ def get_mms_for_this_agent(this_agent, n, m, V, G):
     return mod[mms]
 
 
-def get_value_to_optimize(n, m, scaled_V, G, A):
+def this_agents_bundle_value_from_their_pov(A, this_agent, m, V):
+    return Sum([If(A[this_agent][g],
+                   V[this_agent][g], 0) for g in range(m)])
+
+
+def this_agents_bundle_is_the_least_valuable(A, this_agent, n, m, V):
     formulas = []
-    # TODO hvilket tall? og vanlig variabel eller z3 variabel?
-    lowest_scaled_bundle_value = Real("lowest_scaled_bundle_value")
+
+    this_agents_bundle_value = this_agents_bundle_value_from_their_pov(
+        A, this_agent, m, V)
 
     for i in range(n):
-        formulas.append(lowest_scaled_bundle_value <= Sum(
-            [If(A[i][g], scaled_V[i][g], 0) for g in range(m)]))  # look at this_agents values, because this is from her point of view
+        formulas.append(this_agents_bundle_value <= Sum([If(A[i][g],
+                                                            V[this_agent][g], 0) for g in range(m)]))
 
-    return And(formulas), lowest_scaled_bundle_value
+    return And(formulas)
 
-# TODO skrive ferdig
+
+def get_mms_for_this_agent_quantified(this_agent, n, m, V, G):
+    s = Solver()
+    # s.set("timeout", 100000)  # TODO increase timeout
+
+    # TODO hvilket tall? og vanlig variabel eller z3 variabel?
+    mms = Int("mms_%s" % this_agent)
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, this_agent)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
+         for i in range(n)]
+    # opt.add(mms < np.sum(V[this_agent]))
+    # for all allocations, mms is greater than or equal to the worst bundle
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts(G,
+                                   [[a for a in aa] for aa in A], n),
+                this_agents_bundle_is_the_least_valuable(
+                    [[a for a in aa] for aa in A], this_agent, n, m, V)
+            ),
+            mms >= this_agents_bundle_value_from_their_pov(
+                [[a for a in aa] for aa in A], this_agent, m, V)
+
+
+        )
+    ))
+    # opt.maximize(mms)
+    print("befrore check")
+    res = s.check()
+    if res == unknown:
+        print("Unknown, reason: %s" % s.reason_unknown())
+    mod = s.model()
+    # print(mod)
+    print(mod[mms])
+
+    return mod[mms]
+
+# TODO sjekk med eksemplene der vi vet at det ikke er mulig at alle får sin mms
 
 
 def maximin_shares(n, m, V, G):
-    s = Solver()
 
     # Make sure that the number of nodes in the graph matches the number of items and the valuation function
     assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
@@ -166,6 +215,105 @@ def maximin_shares(n, m, V, G):
             A[i][g], V[i][g], 0) for g in range(m)]) / individual_mms[i], 1)
 
     opt = Optimize()
+
+    min_alpha = Real("min_alpha")
+
+    for i in range(n):
+        bundle_value = Sum(
+            [If(A[i][g], V[i][g], 0) for g in range(m)])
+
+        # opt.add_soft(individual_mms[i] <= bundle_value)
+        opt.add(min_alpha <= bundle_value/individual_mms[i])
+        # opt.maximize(bundle_value)
+        # TODO maximere bundle-verdiene i tillegg?
+    opt.maximize(min_alpha)
+
+    opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    opt.add(get_edge_conflicts(G, A, n))
+    opt.set("timeout", 40000)  # TODO increase timeout
+
+    print(opt.check())
+    mod = opt.model()
+    # print(mod)
+
+    for i in range(n):
+        print("alpha agent", i)
+        print(mod.eval(alpha_mms_agents[i]).as_decimal(3))
+
+    return opt.check() == sat
+
+
+def get_mms_for_this_agent_manual_optimization(this_agent, n, m, V, G):
+    # opt = Optimize()
+    # opt.set("timeout", 100000)  # TODO increase timeout
+    s = Solver()
+
+    start_mms = 163
+
+    # TODO hvilket tall? og vanlig variabel eller z3 variabel?
+    mms = Int("mms_%s" % this_agent)
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s_mms_calculation_%s" % (i+1, j+1, this_agent)) for j in range(m)]  # TODO må jeg ha denne? virker som det blir mye vfor z3 å tenke på
+         for i in range(n)]
+
+    # beginning optimazation value
+    s.add(mms == start_mms)
+
+    for i in range(n):
+        s.add(mms <= Sum(
+            [
+
+                If(A[i][g],
+                   V[this_agent][g], 0)
+                for g in range(m)
+
+            ]))  # look at this_agents values, because this is from her point of view
+
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    s.add(get_edge_conflicts(G, A, n))
+    res = s.check()
+    best = s.model()
+    print(res)
+    # while res == sat:
+    mod = s.model()
+    print(mod[mms])
+
+    res = s.check()
+
+    # print(mod)
+    print(mod[mms])
+
+    return best[mms]
+
+
+def maximin_shares_manual_optimization(n, m, V, G):
+    s = Solver()
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
+        str(m)+" nodes: "+str(G.vcount())
+    assert m == V[0].size, "The number of items do not match the valuation function"
+
+    # individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
+    individual_mms = [0 for i in range(n)]
+    alpha_mms_agents = [Real("alpha_agent_%s" % (i+1)) for i in range(n)]
+
+    for i in range(n):
+        individual_mms[i] = get_mms_for_this_agent_manual_optimization(
+            i, n, m, V, G)
+        # print(type(individual_mms[i]))
+        if individual_mms[i] == None:
+            return False
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    for i in range(n):
+        alpha_mms_agents[i] = If(individual_mms[i] > 0, Sum([If(
+            A[i][g], V[i][g], 0) for g in range(m)]) / individual_mms[i], 1)
+
+    opt = Optimize()
     
     min_alpha = Real("min_alpha")
 
@@ -173,7 +321,7 @@ def maximin_shares(n, m, V, G):
         bundle_value = Sum(
             [If(A[i][g], V[i][g], 0) for g in range(m)])
         
-        opt.add_soft(individual_mms[i] <= bundle_value)
+        # opt.add_soft(individual_mms[i] <= bundle_value)
         opt.add(min_alpha <= bundle_value/individual_mms[i])
         # opt.maximize(bundle_value)
         # TODO maximere bundle-verdiene i tillegg?
