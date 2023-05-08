@@ -67,7 +67,7 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
         for (k, v) in consts(mod)
             if string(k) == string(mms)
                 # println(typeof(Z3_get_numeral_decimal_string(v)))
-                println("isreal: ",is_real(v))
+                # println("isreal: ",is_real(v))
                 println("$k = $((get_decimal_string(v, 3)))" )
                 ans = parse(Float64,get_decimal_string(v, 3))#parse(Float64, string(eval(v))) # TODO better conversion
                 # ans = real_val(ctx,v)
@@ -87,7 +87,7 @@ function maximin_shares(n, m, V, G)
     individual_mms = []
     
     for i in 1:n
-        println("mms i: ", i, " n: ", n)
+        # println("mms i: ", i, " n: ", n)
         push!(individual_mms,get_mms_for_this_agent(i, n, m, V, G))
         # println(typeof(individual_mms[i]))
         # if typeof(individual_mms[i]) != Z3.ExprAllocated 
