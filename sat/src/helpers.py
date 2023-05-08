@@ -41,6 +41,20 @@ def get_edge_conflicts(G, A, n):
     return And([conflict for conflict in conflicts])
 
 
+def get_edge_conflicts_int(G, A, n):
+    conflicts = []
+    # Enforce the conflicts from the graph
+    for e in G.get_edgelist():
+        g = e[0]
+        h = e[1]
+
+        for i in range(n):
+            # Make sure that a single agent only can get one of two conflicting items
+            conflicts.append((A[i][g] + A[i][h]) <= 1)
+
+    return And([conflict for conflict in conflicts])
+
+
 def get_edge_conflicts_adjacency_matrix(G, A, n, m):
     formulas = []
 
@@ -206,6 +220,15 @@ def get_formula_for_one_item_to_one_agent(A, n, m):
     # Each item allocated to at exactly one agent
     for g in range(m):
         formulas.append(Sum([If(A[i][g], 1, 0) for i in range(n)]) == 1)
+
+    return And([formula for formula in formulas])
+
+
+def get_formula_for_one_item_to_one_agent_int(A, n, m):
+    formulas = []
+    # Each item allocated to at exactly one agent
+    for g in range(m):
+        formulas.append(Sum([A[i][g] for i in range(n)]) == 1)
 
     return And([formula for formula in formulas])
 
