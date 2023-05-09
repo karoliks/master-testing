@@ -9,6 +9,8 @@ from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get
 
 
 def is_ef1_possible(n, m, V):
+    # Convert to python list, in case it is made with numpy
+    V = V.tolist()
     s = Solver()
 
     # A  keeps track of the allocated items
@@ -32,7 +34,8 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     # Make sure that the number of nodes in the graph matches the number of items and the valuation function
     assert m == G.vcount(), "The number of items do not match the size of the graph"
     assert m == V[0].size, "The number of items do not match the valuation function"
-
+    # Convert to python list, in case it is made with numpy
+    V = V.tolist()
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]

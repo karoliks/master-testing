@@ -3,28 +3,24 @@ from z3 import *
 ### Helper functions ###
 ########################
 
-# Does not work when the valuations can be negative
-# This is because a boolean array is used to determine
-# whether a item should count or not. This is done by
-# multipliyng it with values. But a zero resulting for
-# this multiplicaiton will be more than any potential
-# negative value
 
+def max_in_product_array_bool(d_i_j, v_i, m):
+    max_value = 0
 
-def max_in_product_array(d_i_j, v_i):
-    product = [a*b for a, b in zip(d_i_j, v_i)]
-    m = product[0]
-    for v in product[1:]:
-        m = If(v > m, v, m)
-    return m
-
-
-def max_in_product_array_bool(d_i_j, v_i):
-    product = [If(a, 1, 0)*b for a, b in zip(d_i_j, v_i)]
-    m = product[0]
-    for v in product[1:]:
-        m = If(v > m, v, m)
-    return m
+    for item in range(1, m):
+        
+        agent_has_this_item = d_i_j[item]
+        value_of_item = v_i[item]
+        
+        max_value = If(
+            And(
+                agent_has_this_item,
+                value_of_item > max_value
+            ),
+            value_of_item,
+            max_value)
+        
+    return max_value
 
 
 def get_edge_conflicts(G, A, n):
@@ -254,7 +250,7 @@ def get_formula_for_ensuring_ef1(A, V, n, m):
 
             # Check that there is no envy once an item is possibly dropped
             formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i]))
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m))
 
     return And([formula for formula in formulas])
 
@@ -270,6 +266,6 @@ def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
 
             # Check that there is no envy once an item is possibly dropped
             formulas.append(If(And(i < n, j < n), Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i]), True))
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m), True))
 
     return And(formulas)
