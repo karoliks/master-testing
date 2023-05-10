@@ -215,7 +215,7 @@ def get_formula_for_one_item_to_one_agent(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
-        formulas.append(Sum([If(A[i][g], 1, 0) for i in range(n)]) == 1)
+        formulas.append(PbEq([(A[i][g], 1) for i in range(n)], 1))
 
     return And([formula for formula in formulas])
 
@@ -233,8 +233,10 @@ def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
-        formulas.append(Sum([If(i < n, If(A[i][g], 1, 0), 0)
-                        for i in range(m)]) == 1)
+        formulas.append(PbEq(
+            [(And(i < n, If(A[i][g])), 1)
+             for i in range(m)],
+            1))
 
     return And([formula for formula in formulas])
 
