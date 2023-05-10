@@ -32,11 +32,11 @@ def get_edge_conflicts(G, A, n):
 
         for i in range(n):
             # Make sure that a single agent only can get one of two conflicting items
-            conflicts.append((If(A[i][g], 1, 0) + If(A[i][h], 1, 0)) <= 1)
+            conflicts.append(Not(And(A[i][g], A[i][h])))
 
     return And([conflict for conflict in conflicts])
 
-
+# TODO brukes egentlig denne?
 def get_edge_conflicts_int(G, A, n):
     conflicts = []
     # Enforce the conflicts from the graph
@@ -66,7 +66,7 @@ def get_edge_conflicts_adjacency_matrix(G, A, n, m):
                         G[row][col],
 
                         # Then: make sure that the same agent dont get the items in both ends
-                        ((If(A[i][row], 1, 0) + If(A[i][col], 1, 0)) <= 1),
+                        Not(And(A[i][row], A[i][col])),
 
                         # Else: Do whatever
                         True
@@ -91,7 +91,7 @@ def get_edge_conflicts_adjacency_matrix_unknown_agents(G, A, m):
                         G[row][col],
 
                         # Then: make sure that the same agent dont get the items in both ends
-                        ((If(A[i][row], 1, 0) + If(A[i][col], 1, 0)) <= 1),
+                        Not(And(A[i][row], A[i][col])),
 
                         # Else: Do whatever
                         True
@@ -224,7 +224,7 @@ def get_formula_for_one_item_to_one_agent_int(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
-        formulas.append(Sum([A[i][g] for i in range(n)]) == 1)
+        formulas.append(PbEq([(A[i][g], 1) for i in range(n)], 1))
 
     return And([formula for formula in formulas])
 
