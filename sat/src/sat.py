@@ -17,12 +17,7 @@ def is_ef1_possible(n, m, V):
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
 
-    # D keepstrack of items that are dropped when checking for Ef1
-    D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
-          for j in range(n)] for k in range(n)]
-
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_formula_for_ensuring_ef1(A, V, n, m))
 
     return s.check() == sat
@@ -40,13 +35,7 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
 
-    # TODO: remove all use of D?
-    # D keepstrack of items that are dropped when checking for Ef1
-    D = [[[Bool("d_%s_%s_%s" % (k+1, j+1, i+1)) for i in range(m)]
-          for j in range(n)] for k in range(n)]
-
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    s.add(get_formula_for_correct_removing_of_items(A, D, n, m))
     s.add(get_formula_for_ensuring_ef1(A, V, n, m))
     s.add(get_edge_conflicts(G, A, n))
 
