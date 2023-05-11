@@ -7,7 +7,7 @@ from z3 import *
 def max_in_product_array_bool(d_i_j, v_i, m):
     max_value = 0
 
-    for item in range(1, m):
+    for item in range(0, m):
         
         agent_has_this_item = d_i_j[item]
         value_of_item = v_i[item]
