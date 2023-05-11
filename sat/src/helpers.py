@@ -208,7 +208,7 @@ def get_formula_for_correct_removing_of_items(A, D, n, m):
                 # Make sure only items that are actuallallocated to the agent in question, is dropped
                 formulas.append(If(D[i][j][g], 1, 0) <= If(A[j][g], 1, 0))
 
-    return And([formula for formula in formulas])
+    return And(formulas)
 
 
 def get_formula_for_one_item_to_one_agent(A, n, m):
@@ -217,16 +217,16 @@ def get_formula_for_one_item_to_one_agent(A, n, m):
     for g in range(m):
         formulas.append(PbEq([(A[i][g], 1) for i in range(n)], 1))
 
-    return And([formula for formula in formulas])
+    return And(formulas)
 
-
+# TODO heller bruke sum her siden det erint?
 def get_formula_for_one_item_to_one_agent_int(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
     for g in range(m):
         formulas.append(PbEq([(A[i][g], 1) for i in range(n)], 1))
 
-    return And([formula for formula in formulas])
+    return And(formulas)
 
 
 def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
@@ -238,8 +238,7 @@ def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
              for i in range(m)],
             1))
 
-    return And([formula for formula in formulas])
-
+    return And([formulas])
 
 def get_formula_for_ensuring_ef1(A, V, n, m):
     formulas = []
@@ -250,9 +249,9 @@ def get_formula_for_ensuring_ef1(A, V, n, m):
             if i == j:
                 continue
 
-            # Check that there is no envy once an item is possibly dropped
-            formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m))
+             # Check that there is no envy once an item is possibly dropped
+            formulas.append(Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m))
 
     return And([formula for formula in formulas])
 
