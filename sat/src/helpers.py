@@ -272,6 +272,35 @@ def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
     return And(formulas)
 
 
+def min_in_product_array_bool(d_i_j, v_i):
+    # Using nefative number for values not allocated to be able to distinguish
+    # between items between items with value equal to zero and items not allowed
+    # to check for (not allocated to this agent)
+    product = [If(a, b, -10) for a, b in zip(d_i_j, v_i)]
+    m = product[0]
+    for v in product[1:]:
+        m = If(Or(And(v < m, v >= 0), m < 0), v, m)
+
+    return m
+
+
+def get_formula_for_ensuring_efx(A, V, n, m):
+    formulas = []
+
+    for i in range(n):
+        for j in range(n):
+
+            if i == j:
+                continue
+
+            # Check that there is no envy once an item is possibly dropped
+            formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]))
+
+    return And(formulas)
+
+
+
 def get_mms_for_this_agent_int(this_agent, n, m, V, G):
     formulas = []
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
