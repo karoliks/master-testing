@@ -238,7 +238,7 @@ def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
              for i in range(m)],
             1))
 
-    return And([formulas])
+    return And(formulas)
 
 def get_formula_for_ensuring_ef1(A, V, n, m):
     formulas = []
@@ -253,7 +253,7 @@ def get_formula_for_ensuring_ef1(A, V, n, m):
             formulas.append(Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
                             Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m))
 
-    return And([formula for formula in formulas])
+    return And(formulas)
 
 
 def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
