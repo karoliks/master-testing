@@ -193,9 +193,9 @@ def find_valuation_function_and_agents_with_no_efx(n, m):
     )
     )
 
-    print(s.check())
     valuation_function = []
     is_sat = s.check()
+    print(is_sat)
 
     if(is_sat == sat):
 
@@ -249,9 +249,9 @@ def find_valuation_function_with_no_efx(n, m):
     )
     )
 
-    print(s.check())
     valuation_function = []
     is_sat = s.check()
+    print(is_sat)
 
     if(is_sat == sat):
 
@@ -311,9 +311,9 @@ def find_valuation_function_with_no_ef1(n, m, G):
     )
     )
 
-    print(s.check())
     valuation_function = []
     is_sat = s.check()
+    print(is_sat)
 
     if(is_sat == sat):
 
@@ -375,10 +375,10 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
         )
     ))
 
-    print(s.check())
     valuation_function = []
     discovered_graph = []
     is_sat = s.check()
+    print(is_sat)
     matrix = [[]]
     if(is_sat == sat):
 
@@ -448,10 +448,11 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
         )
     ))
 
-    print(s.check())
+    is_sat = s.check()
+    print(is_sat)
+    
     valuation_function = []
     discovered_graph = []
-    is_sat = s.check()
     matrix = [[]]
     n_int = 0
     if(is_sat == sat):
@@ -530,10 +531,10 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
         )
     ))
 
-    print(s.check())
     valuation_function = []
     discovered_graph = []
     is_sat = s.check()
+    print(is_sat)
     matrix = [[]]
     n_int = 0
     if(is_sat == sat):
@@ -614,10 +615,10 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
         )
     ))
 
-    print(s.check())
     valuation_function = []
     discovered_graph = []
     is_sat = s.check()
+    print(is_sat)
     matrix = [[]]
     n_int = 0
     if(is_sat == sat):
@@ -726,9 +727,9 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
         )
     ))
 
-    print(s.check())
     valuation_function = []
     is_sat = s.check()
+    print(is_sat)
     n_int = 0
     if(is_sat == sat):
 
@@ -794,10 +795,10 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycl
         )
     ))
 
-    print(s.check())
     valuation_function = []
     discovered_graph = []
     is_sat = s.check()
+    print(is_sat)
     matrix = [[]]
     n_int = 0
     if(is_sat == sat):
@@ -850,8 +851,8 @@ def is_path_always_ef1():
 
     s.add(n == 4)
     s.add(m == 6)
-
-    print(s.check())
-    if(s.check() == sat):
+    is_sat = s.check()
+    print(is_sat)
+    if(is_sat == sat):
         print(s.model())
     return True
