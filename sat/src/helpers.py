@@ -234,7 +234,7 @@ def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
     # Each item allocated to at exactly one agent
     for g in range(m):
         formulas.append(PbEq(
-            [(And(i < n, If(A[i][g])), 1)
+            [(And(i < n, A[i][g]), 1)
              for i in range(m)],
             1))
 
