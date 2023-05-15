@@ -264,10 +264,10 @@ def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
 
             if i == j:
                 continue
-
-            # Check that there is no envy once an item is possibly dropped
-            formulas.append(If(And(i < n, j < n), Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m), True))
+            
+            # # Check that there is no envy once an item is possibly dropped
+            formulas.append(If(And(i < n, j < n), Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m), True))
 
     return And(formulas)
 
