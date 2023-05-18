@@ -280,10 +280,10 @@ def test_mms_with_conflicts_manual_optimization():
 
 
 def test_discover_bad_valuation_functions():
-    n = 2
-    m = 3
+    n = 4
+    m = 5
 
-    path = Graph.Ring(n=3, circular=False)
+    path = Graph.Ring(n=m, circular=False)
     plot(path, target='path.pdf')
 
     assert find_valuation_function_with_no_ef1(
