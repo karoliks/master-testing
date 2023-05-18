@@ -1,8 +1,9 @@
+import time
 from z3 import *
 from igraph import *
 import numpy as np
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_efx, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
 
 
 
@@ -41,7 +42,7 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
-def maximin_shares(n, m, V, G):
+def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
 
     # Make sure that the number of nodes in the graph matches the number of items and the valuation function
     assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
@@ -495,7 +496,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
          for i in range(m)]
 
     # Adjacency matrux for conlfict graph
-    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
+    G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)] 
          for i in range(m)]
 
     # Forece the values to be binary
@@ -504,7 +505,6 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
             s.add(Or(V[i][j] == 1, V[i][j] == 0))
 
     s.add(n < m)
-    # TODO: make the number of agents larger than the largest connected component of the graph
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
 
@@ -533,6 +533,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
     print(is_sat)
     matrix = [[]]
     n_int = 0
+    graph = None
     if(is_sat == sat):
 
         mod = s.model()
@@ -550,11 +551,11 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
         matrix = [[is_true(edge) for edge in discovered_graph[i:i+m]]
                   for i in range(0, len(discovered_graph), m)]
 
+        graph = Graph.Adjacency(matrix, mode="max")
     print()
     print("valuation_function", valuation_function)
     print("discovered_graph:", matrix)
 
-    graph = Graph.Adjacency(matrix, mode="max")
 
     return (is_sat == sat, valuation_function, graph, n_int)
 
