@@ -57,7 +57,7 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
     # set(opt,"timeout", 5000)  # TODO increase timeout
     add(opt,and(formulas))
     add(opt,get_formula_for_one_item_to_one_agent(A, n, m, ctx))
-    # opt.add(get_edge_conflicts(G, A, n))
+    # opt.add(get_edge_conflicts(G, A, n)) # TODO take back to test
     maximize(opt,mms)
     println(check(opt) == Z3.sat)
     mod = get_model(opt)
@@ -83,6 +83,7 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
     return ans
 end
 
+# TODO ikke bruke maksimering her? 
 function maximin_shares(n, m, V, G)
 
     individual_mms = []
@@ -120,7 +121,8 @@ function maximin_shares(n, m, V, G)
     end
 
     add(opt,get_formula_for_one_item_to_one_agent(A, n, m, ctx))
- 
+    # opt.add(get_edge_conflicts(G, A, n)) # TODO take back to test
+
     # println(check(opt))
     mod = get_model(opt)
    
@@ -142,9 +144,9 @@ function erdos_renyi_experiment()
     timed_out_counter = 0
     discarded_graph_counter = 0
 
-    for i in 1:200
+    for i in 1:100
         n = 4#rand(2:10)
-        m = rand(n*2:n*4)
+        m = rand(n*2:n*3)
         p = rand()
 
         V = rand(0:100, n, m)
@@ -185,7 +187,7 @@ function erdos_renyi_experiment()
     # naming the y axis
     ylabel!("execution time (seconds)")
 
-    Plots.savefig("erdos_renyi_mms_z3_agents_julia_4a.pdf")
+    Plots.savefig("no_conflicts_mms_z3_agents_julia_4a.pdf")
 
     # function to show the plot
     # Plots.show()
