@@ -267,7 +267,22 @@ def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
             
             # # Check that there is no envy once an item is possibly dropped
             formulas.append(If(And(i < n, j < n), Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
-                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m), True))
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m), True))# TODO kan vel gjøres  enkelere med binære verdier?
+
+    return And(formulas)
+
+def get_formula_for_ensuring_ef1_unknown_agents_boolean_values(A, V, n, m):
+    formulas = []
+
+    for i in range(m):
+        for j in range(m):
+
+            if i == j:
+                continue
+            
+            # # Check that there is no envy once an item is possibly dropped
+            formulas.append(If(And(i < n, j < n), Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >= # TODO teste med å gjøre v boolsk og snde det sammen med A?
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - 1, True))# TODO kan vel gjøres  enkelere med binære verdier?
 
     return And(formulas)
 

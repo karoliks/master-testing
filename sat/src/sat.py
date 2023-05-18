@@ -498,11 +498,6 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
     G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)]  # TODO ikke hardkode dette 2-tallet
          for i in range(m)]
 
-    # Make sure all values are non-negative
-    for i in range(m):
-        for j in range(m):
-            s.add(V[i][j] >= 0)
-
     # Forece the values to be binary
     for i in range(m):
         for j in range(m):
@@ -525,7 +520,8 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
             ),
 
             Not(
-                get_formula_for_ensuring_ef1_unknown_agents(
+                # get_formula_for_ensuring_ef1_unknown_agents(
+                get_formula_for_ensuring_ef1_unknown_agents_boolean_values(
                     [[a for a in aa] for aa in A], V, n, m)
             )
         )
