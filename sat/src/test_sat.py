@@ -2,6 +2,7 @@ import numpy as np
 from igraph import *
 from random import randint, random
 import time
+import csv
 
 from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
 
@@ -28,8 +29,47 @@ def test_efx_no_conflicts_2():
         n, m, V) == True, "EFX should be possible when there are only two agents"
 
 
+def test_efx_no_conflicts_csv():
+    n = 7
+    m = 2
+    V = np.random.rand(n, m)
+    
+    times = []
+    agents = []
+    items = []
+    timed_out_counter = 0
+    for i in range(30):
+        n = randint(2, 5)#50)
+        m = n*4#randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+
+        V = np.random.randint(100, size=(n, m)).astype(float)
+
+        st = time.time()
+        assert is_efx_possible(
+                n, m, V) == True, "EFX isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        
+    rows=zip(times,agents,items)
+
+    with open("efx_no_conflicts.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items"))
+        for row in rows:
+            writer.writerow(row)
+    
+
+
 def test_discover_bad_valuation_functions_efx_1():
-    n = 4
+    n = 2
     m = 6
 
     assert find_valuation_function_with_no_efx(
@@ -52,6 +92,44 @@ def test_ef1_no_conflicts_2():
 
     assert is_ef1_possible(
         n, m, V) == True, "EF1 should be possible when there are no conflicts"
+    
+def test_ef1_no_conflicts_csv():    
+    times = []
+    agents = []
+    items = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2, 10)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        assert is_ef1_possible(
+                n, m, V) == True, "EF1 isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        
+    rows=zip(times,agents,items)
+
+    with open("ef1_no_conflicts.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items"))
+        for row in rows:
+            writer.writerow(row)
+    
 
 
 def test_ef1_with_conflicts():

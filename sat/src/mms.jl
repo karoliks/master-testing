@@ -2,6 +2,7 @@ using Z3
 using Plots
 using Graphs 
 using GraphRecipes
+using CSV
 
 # ctx = Context()
 # x = real_const(ctx, "x")
@@ -170,6 +171,8 @@ function erdos_renyi_experiment()
         push!(agents, n)
         push!(items, m)
     end
+
+    CSV.write("erdos_renyi_mms_z3_items_julia_4a.csv", (times = times, agents=agents, items=items))
 
     println("timed_out_counter", timed_out_counter)
     println("discarded_graph_counter", discarded_graph_counter)
