@@ -347,9 +347,13 @@ def test_discover_valuations_and_graph():
 def test_discover_valuations_and_graph_and_agents():
     p = 3
     m = p*2
+    st = time.time()
+
 
     result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1(
         m)
+    et = time.time()
+    print("elapsed time:", et - st)
 
     plot(graph, target='from_z3.pdf')
     V = np.array([[agent_vals for agent_vals in V[i:i+m]]
@@ -392,12 +396,15 @@ def test_discover_valuations_and_graph_and_agents_only_paths():
 
 
 def test_discover_valuations_and_graph_and_agents_binary_vals():
-    p = 3
-    m = 6
+    # p = 3
+    m =  7
+    st = time.time()
 
     result, V, graph, n = find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(
         m)
-
+    et = time.time()
+    print("elapsed time:", et - st)
+    
     plot(graph, target='from_z3.pdf')
     V = np.array([[agent_vals for agent_vals in V[i:i+m]]
                   for i in range(0, len(V), m)])
