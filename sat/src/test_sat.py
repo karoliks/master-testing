@@ -4,7 +4,7 @@ from random import randint, random
 import time
 import csv
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
+from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
 
 
 def test_sum():
@@ -30,9 +30,7 @@ def test_efx_no_conflicts_2():
 
 
 def test_efx_no_conflicts_csv():
-    n = 7
-    m = 2
-    V = np.random.rand(n, m)
+
     
     times = []
     agents = []
@@ -391,10 +389,16 @@ def test_send_valuations_for_checking_bipartite_minus_edge():
     graph = Graph.Full_Bipartite(4, 4)
     edges = graph.get_edgelist()
     graph.delete_edges([edges[0]])
-    plot(graph, target='bipartite.pdf')
+    plot(graph, target='bipartite_minus_edge.pdf')
+    print("Starting")
+    st = time.time()
 
+   
     V = find_valuation_function_with_no_ef1(
-        n, m, graph)[1]
+        n, m, graph)[1] 
+    et = time.time()
+
+    print("elapsed time:", et - st)
     V = np.array([V[0:8],
                   V[8:16],
                   V[16:24],
@@ -404,6 +408,44 @@ def test_send_valuations_for_checking_bipartite_minus_edge():
 
     assert is_ef1_with_conflicts_possible(
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+def test_discover_bad_valuation_functions_csv():    
+    times = []
+    agents = []
+    items = []
+    timed_out_counter = 0
+    for i in range(4,7):
+        n = i
+        p = i-1
+        m = p*2
+        graph = Graph.Full_Bipartite(p, p)
+        
+        print("iteration:",i,"n:",n,"m:", m)
+
+    
+        st = time.time()
+        V = find_valuation_function_with_no_ef1(
+        n, m, graph)[1]
+        et = time.time()
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        
+    rows=zip(times,agents,items)
+
+    with open("cb_discover_bad_valuation_functions.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items"))
+        for row in rows:
+            writer.writerow(row)
+    
 
 
 def test_discover_valuations_and_graph():
@@ -472,6 +514,73 @@ def test_discover_valuations_and_graph_and_agents_only_paths():
     # plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
     #      vertex_color='#bcf6f7')
 
+def test_discover_valuations_and_graph_and_agents_only_paths_csv():
+    times = []
+    results = []
+    items = []
+    for i in range(3,8):
+        
+        print("iteration:",i,"m:", i)
+
+    
+        st = time.time()
+        result, V, n = find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(
+            i)
+        et = time.time()
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        results.append(result)
+        items.append(i)
+        
+    rows=zip(items,times,results)
+
+    with open("path_not_ef1.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("items","times", "results"))
+        for row in rows:
+            writer.writerow(row)
+
+
+
+def test_discover_valuations_and_agents_efx_csv():
+    times = []
+    results = []
+    items = []
+    for m in range(1,8):
+        
+        print("m:", m)
+
+    
+        st = time.time()
+        result, V, n = find_valuation_function_and_agents_with_no_efx(
+            m)
+        et = time.time()
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        results.append(result)
+        items.append(m)
+        
+    rows=zip(items,times,results)
+
+    with open("not_efx.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("items","times", "results"))
+        for row in rows:
+            writer.writerow(row)
+
+
 
 def test_discover_valuations_and_graph_and_agents_binary_vals():
     # p = 3
@@ -489,6 +598,39 @@ def test_discover_valuations_and_graph_and_agents_binary_vals():
 
     assert is_ef1_with_conflicts_possible(
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+
+def test_discover_valuations_and_graph_and_agents_binary_vals_csv():
+    times = []
+    results = []
+    items = []
+    for m in range(3,8):
+        
+        print("m:", m)
+
+    
+        st = time.time()
+        result, V, g,n = find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(
+            m)
+        et = time.time()
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        results.append(result)
+        items.append(m)
+        
+    rows=zip(items,times,results)
+
+    with open("binary_not_ef1.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("items","times", "results"))
+        for row in rows:
+            writer.writerow(row)
+
 
 
 def test_discover_valuations_and_graph_and_agents_ternary_vals():
@@ -543,6 +685,11 @@ if __name__ == "__main__":
     # test_mms_with_conflicts_unknown()
     # test_mms_with_conflicts_manual_optimization()
     # test_discover_valuations_and_graph_and_agents_binary_vals()
-    test_ef1_no_conflicts_csv()
+    # test_ef1_no_conflicts_csv()
     # test_efx_no_conflicts_csv()
+    test_discover_valuations_and_agents_efx_csv()
+    # test_discover_bad_valuation_functions_csv()
+    # test_discover_valuations_and_graph_and_agents_only_paths_csv()
+    # test_discover_valuations_and_graph_and_agents_binary_vals_csv()
+    # test_send_valuations_for_checking_bipartite_minus_edge()
     print("Everything passed")
