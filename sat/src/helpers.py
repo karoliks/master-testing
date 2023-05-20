@@ -315,6 +315,22 @@ def get_formula_for_ensuring_efx(A, V, n, m):
     return And(formulas)
 
 
+def get_formula_for_ensuring_efx_unknown_agents(A, V, n, m):
+    formulas = []
+
+    for i in range(m):
+        for j in range(m):
+
+            if i == j:
+                continue
+
+            # Check that there is no envy once an item is possibly dropped
+            formulas.append(If(And(i < n, j < n),Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]),True))
+
+    return And(formulas)
+
+
 
 def get_mms_for_this_agent_int(this_agent, n, m, V, G):
     formulas = []
