@@ -180,7 +180,8 @@ def find_valuation_function_and_agents_with_no_efx(m):
             s.add(V[i][j] >= 0)
     
     # Neccesary restricion because of how the allocation matrix is made
-    s.add(n < m)
+    s.add(n <= m)
+    s.add(n >= 2)
     
 
     s.add(ForAll(
