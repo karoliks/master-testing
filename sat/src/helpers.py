@@ -3,7 +3,7 @@ from z3 import *
 ### Helper functions ###
 ########################
 
-
+# TODO skrive om til en or-ing av alle elementene?
 def max_in_product_array_bool(d_i_j, v_i, m):
     max_value = 0
 
@@ -84,7 +84,7 @@ def get_edge_conflicts_adjacency_matrix_unknown_agents(G, A, m):
     # It is symmetric because conflict graphs are undirected
     for row in range(m):
         for col in range(row):
-            for i in range(m):
+            for i in range(m-1):
                 formulas.append(
                     If(
                         # If: there is an edge
@@ -235,7 +235,7 @@ def get_formula_for_one_item_to_one_agent_uknown_agents(A, n, m):
     for g in range(m):
         formulas.append(PbEq(
             [(And(i < n, A[i][g]), 1)
-             for i in range(m)],
+             for i in range(m-1)],
             1))
 
     return And(formulas)
@@ -252,6 +252,22 @@ def get_formula_for_ensuring_ef1(A, V, n, m):
              # Check that there is no envy once an item is possibly dropped
             formulas.append(Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
                             Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V[i], m))
+
+    return And(formulas)
+
+
+def get_formula_for_ensuring_ef1_equal_valuation_functions(A, V, n, m):
+    formulas = []
+
+    for i in range(n):
+        for j in range(n):
+
+            if i == j:
+                continue
+
+             # Check that there is no envy once an item is possibly dropped
+            formulas.append(Sum([If(A[i][g], V[g], 0) for g in range(m)]) >=
+                            Sum([If(A[j][g], V[g], 0) for g in range(m)]) - max_in_product_array_bool(A[j], V, m))
 
     return And(formulas)
 
@@ -274,8 +290,8 @@ def get_formula_for_ensuring_ef1_unknown_agents(A, V, n, m):
 def get_formula_for_ensuring_ef1_unknown_agents_boolean_values(A, V, n, m):
     formulas = []
 
-    for i in range(m):
-        for j in range(m):
+    for i in range(m-1):
+        for j in range(m-1):
 
             if i == j:
                 continue
@@ -309,8 +325,8 @@ def get_formula_for_ensuring_efx(A, V, n, m):
                 continue
 
             # Check that there is no envy once an item is possibly dropped
-            formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]))
+            formulas.append(Sum([If(A[i][g], V[i][g] , 0) for g in range(m)]) >=
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]))
 
     return And(formulas)
 

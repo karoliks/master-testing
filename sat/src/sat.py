@@ -1,7 +1,7 @@
 from z3 import *
 from igraph import *
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_equal_valuation_functions, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
 
 
 
@@ -163,6 +163,8 @@ def maximin_shares_manual_optimization(n, m, V, G):
 
 def find_valuation_function_and_agents_with_no_efx(m):
     s = Solver()
+    s.set("timeout", 4400000)  # TODO timeout is now 30 min.
+    
     
     n = Int("n")
 
@@ -398,7 +400,7 @@ def find_valuation_function_with_no_ef1(n, m, G):
         )
     )
     )
-    s.set("timeout", 3600000)  # TODO increase timeout
+    s.set("timeout", 8600000)  # TODO increase timeout
     
 
     valuation_function = []
@@ -409,6 +411,69 @@ def find_valuation_function_with_no_ef1(n, m, G):
 
         m = s.model()
         tuples = sorted([(d, m[d]) for d in m], key=lambda x: str(x[0]))
+        valuation_function = [d[1] for d in tuples]
+
+        # counter = 0
+        # while s.check() == sat and counter < 15:
+        #     counter = counter+1
+        #     print(s.model())
+        #     # prevent next model from using the same assignment as a previous model
+        #     s.add(Or([(v != s.model()[v]) for vv in V for v in vv]))
+
+    print()
+    print(valuation_function)
+    print()
+    return (is_sat == sat, valuation_function)
+
+
+
+def find_valuation_function_with_no_ef1_equal_valuation_functions(n, m, G):
+    s = Solver()
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G.vcount(), "The number of items do not match the size of the graph"
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    # Valuations
+    V = [Int("v_item%s" % (j)) for j in range(m)]
+         
+
+    # Make sure all values are non-negative
+    for i in range(m):
+        s.add(V[i] >= 0)
+
+    s.add(ForAll(
+        [a for aa in A for a in aa],
+        Implies(
+
+            And(
+                get_formula_for_one_item_to_one_agent(
+                    [[a for a in aa] for aa in A], n, m),
+                get_edge_conflicts(
+                    G, [[a for a in aa] for aa in A], n)),
+
+            Not(
+                get_formula_for_ensuring_ef1_equal_valuation_functions(
+                    [[a for a in aa] for aa in A], V, n, m)
+            )
+        )
+    )
+    )
+    s.set("timeout", 8600000)  # TODO increase timeout
+    
+
+    valuation_function = []
+    is_sat = s.check()
+    print(is_sat)
+
+    if(is_sat == sat):
+
+        model = s.model()
+        print(model)
+        tuples = sorted([(d, model[d]) for d in model], key=lambda x: str(x[0]))
         valuation_function = [d[1] for d in tuples]
 
         # counter = 0
@@ -515,7 +580,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
         for j in range(m):
             s.add(V[i][j] >= 0)
 
-    s.add(n < m)
+    s.add(n < m -1)
     # TODO: make the number of agents larger than the largest connected component of the graph
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
@@ -578,22 +643,23 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
 
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
-         for i in range(m)]
+         for i in range(m-1)] # todo GJØRE OM TIL M-1?
 
     # Valuations
     V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
-         for i in range(m)]
+         for i in range(m-1)]
 
     # Adjacency matrux for conlfict graph
     G = [[Bool("g_row%s_col%s" % (i, j)) for j in range(m)] 
          for i in range(m)]
 
     # Forece the values to be binary
-    for i in range(m):
+    for i in range(m-1):
         for j in range(m):
             s.add(Or(V[i][j] == 1, V[i][j] == 0))
 
-    s.add(n < m)
+    s.add(n < m -1)
+    s.add(n > 2)
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
 
@@ -678,7 +744,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
         for j in range(m):
             s.add(Or(V[i][j] == 1, V[i][j] == 0, V[i][j] == p))
 
-    s.add(n < m)
+    s.add(n < m -1)
     # TODO: make the number of agents larger than the largest connected component of the graph
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
@@ -791,7 +857,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
         for j in range(m):
             s.add(V[i][j] >= 0)
 
-    s.add(n < m)
+    s.add(n < m -1)
     # max degree of graph should be less than the number of agents (path has max degree equal to two)
     s.add(2 < n)
 
@@ -858,7 +924,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycl
         for j in range(m):
             s.add(V[i][j] >= 0)
 
-    s.add(n < m)
+    s.add(n < m - 1)
     # TODO: make the number of agents larger than the largest connected component of the graph
     s.add(get_upper_half_zero(G, m))
     s.add(get_max_degree_less_than_agents(G, n, m))
