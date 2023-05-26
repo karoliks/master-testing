@@ -30,7 +30,7 @@ def max_in_product_array_bool(d_i_j, v_i):
 # TODO not done yet
 
 
-def max_in_product_array_bool_outer_items(a_j, v_i, G, thief, victim):
+def max_in_product_array_bool_outer_items_backup(a_j, v_i, G, thief, victim):
     product = [If(a, 1, 0)*b for a, b in zip(a_j, v_i)]
     m = product[0]
     for v in product[1:]:
@@ -68,21 +68,13 @@ def get_edge_conflicts(G, A, n):
 # TODO:: lage en test som sjekker ate denne funker riktig
 def get_edge_connectivity_formulas(G, A, n, m):
 
-    items_are_connected_to_something = []
+    formulas = []
     for agent in range(n):
-        for i in range(m):
-            item_is_connected_to_something = []
-            for j in range(m):
-                item_is_connected_to_something.append(
-                    If(
-                        And(A[agent][i]),
-                        Or(bool(G[i][j]), bool(G[j][i])),
-                        True
-                    ))
-            items_are_connected_to_something.append(
-                Or(item_is_connected_to_something))
+        # -1 will make the function not care about the missing item
+        formulas.append(
+            is_graph_connected_after_removing_item(G, A[agent], -1))
 
-    return And(items_are_connected_to_something)
+    return And(formulas)
 
 # T)D) kanskje ikke bruke nabimatrise, men en fynskjon? https://stackoverflow.com/questions/72507692/z3-connected-components
 
@@ -243,8 +235,19 @@ def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
                 continue
 
             # Check that there is no envy once an item is possibly dropped
-            formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
+            # formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+            #                 Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
+
+            formulas.append(Or([(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) -
+                            If(
+                                And(A[j][potentially_removed_item],
+                                    is_graph_connected_after_removing_item(
+                                        G, A[j], potentially_removed_item)
+                                    ),
+                                V[i][potentially_removed_item],
+                                0)
+                            ) for potentially_removed_item in range(m)]))
 
     return And([formula for formula in formulas])
 
@@ -358,6 +361,63 @@ def is_graph_connected(graph):
 
     return s.check() == sat
 
+
+def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent, item_to_remove):
+    formulas = []
+    B = BoolSort()
+    NodeSort = Datatype('Node')
+
+    vertices = [v for v in range(graph.vcount())]
+
+    # Setup
+    #################
+    for vertex in vertices:
+        NodeSort.declare(str(vertex))
+    NodeSort = NodeSort.create()
+
+    vs = {}
+    for vertex in vertices:
+        vs[vertex] = getattr(NodeSort, str(vertex))
+
+    EdgeConection = Function('EdgeConection',
+                             NodeSort,
+                             NodeSort, B)
+    TC_EdgeConection = TransitiveClosure(EdgeConection)
+
+    # Make edges go both ways (since they are undirected)
+    x, y = Consts("x y", NodeSort)
+    formulas.append(ForAll([x, y], Implies(
+        EdgeConection(x, y), EdgeConection(y, x))))
+
+    # Give information about the given graph
+    ###########################################
+    adjacency = graph.get_adjacency()
+
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            if vertex1 == item_to_remove or vertex1 == item_to_remove:
+                continue
+            # Say where there is and where there is not edges in the graph
+            formulas.append(If(And(allocated_goods_to_this_agent[vertex1],
+                                   allocated_goods_to_this_agent[vertex2],
+                                   adjacency[vertex1][vertex2] == 1),
+                               EdgeConection(vs[vertex1], vs[vertex2]),
+                               Not(EdgeConection(vs[vertex1], vs[vertex2]))
+                               ))
+
+    # Check connectivity for whole graph by looking at the transitive closure
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            if vertex1 == item_to_remove or vertex1 == item_to_remove:
+                continue
+            formulas.append(TC_EdgeConection(vs[vertex1], vs[vertex2]) == True)
+
+    return And(formulas)
+
 # TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
 def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     s = Solver()
@@ -370,10 +430,10 @@ def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
 
-    G = G_graph.get_adjacency()
+    G = G_graph  # .get_adjacency()
 
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
+    # s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
     s.add(get_edge_connectivity_formulas(G, A, n, m))
 
     return s.check() == sat
