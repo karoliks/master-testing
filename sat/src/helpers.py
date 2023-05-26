@@ -310,7 +310,7 @@ def min_in_product_array_bool(d_i_j, v_i):
     product = [If(a, b, -10) for a, b in zip(d_i_j, v_i)]
     m = product[0]
     for v in product[1:]:
-        m = If(Or(And(v < m, v >= 0), m < 0), v, m)
+        m = If(Or(And(v < m, v >= 0), m < 0), v, m) # TODO fjerne v >= 0 for å ikke bruke streng efx?
 
     return m
 
