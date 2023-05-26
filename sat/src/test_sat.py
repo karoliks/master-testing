@@ -1,7 +1,7 @@
 import numpy as np
 from igraph import *
 
-from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_ef1_possible, is_ef1_with_conflicts_possible, is_ef1_with_connectivity_possible, is_graph_connected
+from sat import find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, is_agent_graph_connected, is_ef1_possible, is_ef1_with_conflicts_possible, is_ef1_with_connectivity_possible, is_graph_connected
 
 
 def test_sum():
@@ -207,6 +207,26 @@ def test_is_graph_connected():
         graph) == True, "The graph is a connected component, so the answer should be true."
 
 
+def test_is_agent_graph_connected():
+    graph = Graph.Ring(n=3, circular=False)
+    allocated = [True, True, True]
+
+    assert is_agent_graph_connected(
+        graph, allocated, -1) == True, "The agent graph is connected, so the answer should be true."
+
+    assert is_agent_graph_connected(
+        graph, allocated, 1) == False, "The agent graph is not connected, so the answer should be false."
+
+    allocated = [True, False, True]
+
+    assert is_agent_graph_connected(
+        graph, allocated, -1) == False, "The agent graph is not a connected component, so the answer should be false."
+
+    assert is_agent_graph_connected(
+        graph, allocated, 0) == True, "The agent graph is a connected component, so the answer should be true."
+
+
+
 if __name__ == "__main__":
     test_sum()
     # test_ef1_no_conflicts_1()
@@ -217,9 +237,10 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
+    test_is_agent_graph_connected()
     test_ef1_with_connectivity_when_it_exists()
     test_ef1_with_connectivity_when_it_exists_2()
     test_ef1_with_connectivity_when_it_does_not_exist2()
-    test_is_graph_connected()
+    # test_is_graph_connected()
 
     print("Everything passed")

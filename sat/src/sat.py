@@ -51,7 +51,6 @@ def max_in_product_array_bool_outer_items_backup(a_j, v_i, G, thief, victim):
                 Or(item_is_connected_to_something))
 
 
-
 def get_edge_conflicts(G, A, n):
     conflicts = []
     # Enforce the conflicts from the graph
@@ -66,13 +65,15 @@ def get_edge_conflicts(G, A, n):
     return And([conflict for conflict in conflicts])
 
 # TODO:: lage en test som sjekker ate denne funker riktig
-def get_edge_connectivity_formulas(G, A, n, m):
+
+
+def get_edge_connectivity_formulas(G, A, n):
 
     formulas = []
     for agent in range(n):
         # -1 will make the function not care about the missing item
         formulas.append(
-            is_graph_connected_after_removing_item(G, A[agent], -1))
+            is_graph_connected_after_removing_item(G, A[agent], -1, agent))
 
     return And(formulas)
 
@@ -153,6 +154,8 @@ really only have to worry about one side of the diagonal.
 This function will also make sure that the diagonal is zero, meaning there
 will be no self-loops.
 """
+
+
 def get_upper_half_zero(G, m):
     formulas = []
 
@@ -243,7 +246,7 @@ def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
                             If(
                                 And(A[j][potentially_removed_item],
                                     is_graph_connected_after_removing_item(
-                                        G, A[j], potentially_removed_item)
+                                        G, A[j], potentially_removed_item, j)
                                     ),
                                 V[i][potentially_removed_item],
                                 0)
@@ -362,10 +365,19 @@ def is_graph_connected(graph):
     return s.check() == sat
 
 
-def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent, item_to_remove):
+def is_agent_graph_connected(graph, allocated_goods_to_this_agent, item_to_remove):
+    s = Solver()
+    s.add(is_graph_connected_after_removing_item(
+        graph, allocated_goods_to_this_agent, item_to_remove, 0))
+    is_sat = s.check()
+    print(is_sat)
+    return is_sat == sat
+
+
+def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent, item_to_remove, agent):
     formulas = []
     B = BoolSort()
-    NodeSort = Datatype('Node')
+    NodeSort = Datatype('Node'+str(agent)+str(item_to_remove))
 
     vertices = [v for v in range(graph.vcount())]
 
@@ -379,13 +391,14 @@ def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent,
     for vertex in vertices:
         vs[vertex] = getattr(NodeSort, str(vertex))
 
-    EdgeConection = Function('EdgeConection',
+    EdgeConection = Function('EdgeConection'+str(agent)+str(item_to_remove),
                              NodeSort,
                              NodeSort, B)
     TC_EdgeConection = TransitiveClosure(EdgeConection)
 
     # Make edges go both ways (since they are undirected)
-    x, y = Consts("x y", NodeSort)
+    x = Const("x"+str(agent)+str(item_to_remove), NodeSort)
+    y = Const("y"+str(agent)+str(item_to_remove), NodeSort)
     formulas.append(ForAll([x, y], Implies(
         EdgeConection(x, y), EdgeConection(y, x))))
 
@@ -397,28 +410,38 @@ def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent,
         for vertex2 in vertices:
             if vertex1 == vertex2:
                 continue
-            if vertex1 == item_to_remove or vertex1 == item_to_remove:
-                continue
+
             # Say where there is and where there is not edges in the graph
-            formulas.append(If(And(allocated_goods_to_this_agent[vertex1],
-                                   allocated_goods_to_this_agent[vertex2],
-                                   adjacency[vertex1][vertex2] == 1),
-                               EdgeConection(vs[vertex1], vs[vertex2]),
-                               Not(EdgeConection(vs[vertex1], vs[vertex2]))
-                               ))
+            formulas.append(If(And(
+                allocated_goods_to_this_agent[vertex1],
+                allocated_goods_to_this_agent[vertex2],
+                vertex1 != item_to_remove,
+                vertex2 != item_to_remove,
+                adjacency[vertex1][vertex2] == 1),
+                EdgeConection(vs[vertex1], vs[vertex2]),
+                Not(EdgeConection(vs[vertex1], vs[vertex2]))
+            ))
 
     # Check connectivity for whole graph by looking at the transitive closure
     for vertex1 in vertices:
         for vertex2 in vertices:
             if vertex1 == vertex2:
                 continue
-            if vertex1 == item_to_remove or vertex1 == item_to_remove:
+            if vertex1 == item_to_remove or vertex2 == item_to_remove:
                 continue
-            formulas.append(TC_EdgeConection(vs[vertex1], vs[vertex2]) == True)
+
+            formulas.append(If(And(
+                allocated_goods_to_this_agent[vertex1],
+                allocated_goods_to_this_agent[vertex2]),
+                TC_EdgeConection(
+                vs[vertex1], vs[vertex2]) == True,
+                True))
 
     return And(formulas)
 
 # TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
+
+
 def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     s = Solver()
 
@@ -433,10 +456,12 @@ def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     G = G_graph  # .get_adjacency()
 
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    # s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
-    s.add(get_edge_connectivity_formulas(G, A, n, m))
+    s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
+    s.add(get_edge_connectivity_formulas(G, A, n))
 
-    return s.check() == sat
+    is_sat = s.check()
+    print(is_sat)
+    return is_sat == sat
 
 
 def find_valuation_function_with_no_ef1(n, m, G):
