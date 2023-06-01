@@ -52,10 +52,10 @@ def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
     alpha_mms_agents = [Real("alpha_agent_%s" % (i+1)) for i in range(n)]
 
     for i in range(n):
-        individual_mms[i] = get_mms_for_this_agent(i, n, m, V, G)
+        individual_mms[i], result = get_mms_for_this_agent(i, n, m, V, G)
         # print(type(individual_mms[i]))
-        if individual_mms[i] == None:
-            return False
+        if result == unknown or result == unsat:
+            return result
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
@@ -80,7 +80,7 @@ def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
 
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
     opt.add(get_edge_conflicts(G, A, n))
-    opt.set("timeout", 40000)  # TODO increase timeout
+    opt.set("timeout", 300000)  # TODO increase timeout
 
     print(opt.check())
     mod = opt.model()

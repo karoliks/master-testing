@@ -74,6 +74,51 @@ def test_efx_no_conflicts_csv():
 
     
 
+def test_mms_no_conflicts_csv():
+
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2, 8)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+        dummy_graph = Graph.Ring(n=m, circular=False)
+        
+
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        result = maximin_shares(
+                n, m, V, dummy_graph)
+        # assert result != unsat, "MMS isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        
+    rows=zip(times,agents,items, results)
+
+    with open("mms_no_conflicts.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results"))
+        for row in rows:
+            writer.writerow(row)
+
+    
 
 def test_discover_bad_valuation_functions_efx_1():
     n = 2
@@ -905,6 +950,7 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_stray_nodes()
     # test_send_valuations_for_checking_hummel()
     # test_discover_bad_valuation_functions_efx_2()
-    test_discover_valuations_and_agents_efx()
+    # test_discover_valuations_and_agents_efx()
+    test_mms_no_conflicts_csv()
     
     print("Everything passed")

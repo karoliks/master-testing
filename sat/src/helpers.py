@@ -391,7 +391,7 @@ def get_mms_for_this_agent_int(this_agent, n, m, V, G):
 def get_mms_for_this_agent(this_agent, n, m, V, G):
     set_param("parallel.enable", True)
     opt = Optimize()
-    opt.set("timeout", 100000)  # TODO increase timeout
+    opt.set("timeout", 300000)  # TODO increase timeout
 
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
     mms = Int("mms_%s" % this_agent)
@@ -419,11 +419,12 @@ def get_mms_for_this_agent(this_agent, n, m, V, G):
     print("mms this agent:", res)
     if res == unknown:
         print("Unknown, reason: %s" % opt.reason_unknown())
+        return 0, res
     mod = opt.model()
     # print(mod)
-    print(mod[mms])
+    print(type(mod[mms]))
 
-    return mod[mms]
+    return mod[mms], res
 
 
 def this_agents_bundle_value_from_their_pov(A, this_agent, m, V):
