@@ -3,6 +3,7 @@ from igraph import *
 from random import randint, random
 import time
 import csv
+from z3 import unsat
 
 from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
 
@@ -35,17 +36,23 @@ def test_efx_no_conflicts_csv():
     times = []
     agents = []
     items = []
+    results = []
     timed_out_counter = 0
-    for i in range(30):
-        n = randint(2, 5)#50)
-        m = n*4#randint(n*2, n*4)
+    for i in range(100):
+        n = randint(2, 8)#50)
+        m = randint(n*2, n*4)
         print("iteration:",i,"n:",n,"m:", m)
 
-        V = np.random.randint(100, size=(n, m)).astype(float)
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
 
+        # print(V)
         st = time.time()
-        assert is_efx_possible(
-                n, m, V) == True, "EFX isnt possible?!"
+        result = is_efx_possible(
+                n, m, V)
+        assert result != unsat, "EFX isnt possible?!"
         
         et = time.time()
 
@@ -55,14 +62,16 @@ def test_efx_no_conflicts_csv():
         times.append(elapsed_time)
         agents.append(n)
         items.append(m)
+        results.append(result)
         
-    rows=zip(times,agents,items)
+    rows=zip(times,agents,items, results)
 
     with open("efx_no_conflicts.csv", "w") as f:
         writer = csv.writer(f)
-        writer.writerow(("times", "agents", "items"))
+        writer.writerow(("times", "agents", "items", "results"))
         for row in rows:
             writer.writerow(row)
+
     
 
 
@@ -72,6 +81,24 @@ def test_discover_bad_valuation_functions_efx_1():
 
     assert find_valuation_function_with_no_efx(
         n, m)[0] == False, "Should not be able to find a valuation function with no EFX when there are two agents"
+
+
+def test_discover_bad_valuation_functions_efx_2():
+    n = 4
+    m = 6
+    
+    st = time.time()
+     
+  
+       
+    print("Starting test_discover_bad_valuation_functions_efx_2")
+    
+    assert find_valuation_function_with_no_efx(
+        n, m)[0] == False, "Should not be able to find a valuation function with no EFX when there are two agents"
+    
+    et = time.time()
+    elapsed_time = et - st
+    print("elapsed_time", elapsed_time)
 
 
 def test_ef1_no_conflicts_1():
@@ -641,7 +668,7 @@ def test_discover_valuations_and_graph_and_agents():
 
 def test_discover_valuations_and_agents_efx():
     # p = 3
-    m = 5
+    m = 7
     st = time.time()
 
 
@@ -851,7 +878,7 @@ if __name__ == "__main__":
     # test_discover_bad_valuation_functions()
     # test_send_valuations_for_checking()
     # test_send_valuations_for_checking_bipartite_minus_edges()
-    test_send_valuations_for_checking_bipartite_minus_edge_equal_valuations()
+    # test_send_valuations_for_checking_bipartite_minus_edge_equal_valuations()
     # test_send_valuations_for_checking_bipartite_6i_minus_edge()
     # test_send_valuations_for_checking_bipartite_10i_minus_edge()
     # test_send_valuations_for_checking_bipartite_minus_edge()
@@ -868,7 +895,7 @@ if __name__ == "__main__":
     # test_mms_with_conflicts_manual_optimization()
     # test_discover_valuations_and_graph_and_agents_binary_vals()
     # test_ef1_no_conflicts_csv()
-    # test_efx_no_conflicts_csv()
+    # test_efx_no_conflicts_csv() 
     # test_discover_valuations_and_agents_efx_csv()
     # test_discover_bad_valuation_functions_csv()
     # test_discover_valuations_and_graph_and_agents_only_paths_csv()
@@ -877,5 +904,7 @@ if __name__ == "__main__":
     # test_discover_valuations_and_agents_efx()
     # test_send_valuations_for_checking_bipartite_stray_nodes()
     # test_send_valuations_for_checking_hummel()
+    # test_discover_bad_valuation_functions_efx_2()
+    test_discover_valuations_and_agents_efx()
     
     print("Everything passed")

@@ -334,8 +334,8 @@ def get_formula_for_ensuring_efx(A, V, n, m):
 def get_formula_for_ensuring_efx_unknown_agents(A, V, n, m):
     formulas = []
 
-    for i in range(m):
-        for j in range(m):
+    for i in range(m-1):
+        for j in range(m-1):
 
             if i == j:
                 continue

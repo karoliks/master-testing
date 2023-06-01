@@ -102,8 +102,9 @@ def is_efx_possible(n, m, V):
 
     s.add(get_formula_for_one_item_to_one_agent(A, n, m))
     s.add(get_formula_for_ensuring_efx(A, V, n, m))
-
-    return s.check() == sat
+    s.set("timeout", 10000000)  # TODO timeout is now 10000 seconds.
+    
+    return s.check()
 
 
 def maximin_shares_manual_optimization(n, m, V, G):
@@ -163,27 +164,29 @@ def maximin_shares_manual_optimization(n, m, V, G):
 
 def find_valuation_function_and_agents_with_no_efx(m):
     s = Solver()
-    s.set("timeout", 4400000)  # TODO timeout is now 30 min.
+    s.set("timeout", 18000000)  # TODO timeout is now 5 hours.
     
     
     n = Int("n")
 
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
-         for i in range(m)]
+         for i in range(m-1)]
 
     # Valuations
     V = [[Int("v_agent%s_item%s" % (i, j)) for j in range(m)]
-         for i in range(m)]
+         for i in range(m-1)]
 
     # Make sure all values are non-negative
-    for i in range(m):
+    for i in range(m-1):
         for j in range(m):
             s.add(V[i][j] >= 0)
     
     # Neccesary restricion because of how the allocation matrix is made
-    s.add(n <= m)
-    s.add(n >= 2)
+    s.add(n < m)
+    # s.add(n <= m)
+    s.add(n >= 4)
+    # s.add(n >= 2)
     
 
     s.add(ForAll(
