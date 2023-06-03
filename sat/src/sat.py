@@ -40,11 +40,12 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
-def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
+def maximin_shares(n, m, V, G=None):  # TODO ikke bruke optimization her?
 
-    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
-    assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
-        str(m)+" nodes: "+str(G.vcount())
+    if G != None:
+        # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+        assert m == G.vcount(), "The number of items do not match the size of the graph, items: " + \
+            str(m)+" nodes: "+str(G.vcount())
     assert m == V[0].size, "The number of items do not match the valuation function"
 
     # individual_mms = [Real("mms_agent_%s" % (i+1)) for i in range(n)]
@@ -64,25 +65,27 @@ def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
         alpha_mms_agents[i] = If(individual_mms[i] > 0, Sum([If(
             A[i][g], V[i][g], 0) for g in range(m)]) / individual_mms[i], 1)
 
-    opt = Optimize()
+    opt = Solver()
+    # opt.set("timeout", 300000)  # TODO increase timeout
+    
 
-    min_alpha = Real("min_alpha")
+    # min_alpha = Real("min_alpha")
 
     for i in range(n):
         bundle_value = Sum(
             [If(A[i][g], V[i][g], 0) for g in range(m)])
 
-        # opt.add_soft(individual_mms[i] <= bundle_value)
-        opt.add(min_alpha <= bundle_value/individual_mms[i])
+        opt.add(individual_mms[i] <= bundle_value)
+        # opt.add(min_alpha <= bundle_value/individual_mms[i])
         # opt.maximize(bundle_value)
         # TODO maximere bundle-verdiene i tillegg?
-    opt.maximize(min_alpha)
+    # opt.maximize(min_alpha)
 
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    opt.add(get_edge_conflicts(G, A, n))
-    opt.set("timeout", 300000)  # TODO increase timeout
-
-    print(opt.check())
+    if G != None:
+        opt.add(get_edge_conflicts(G, A, n))
+    is_sat = opt.check()
+    print(is_sat)
     mod = opt.model()
     # print(mod)
 
@@ -90,7 +93,7 @@ def maximin_shares(n, m, V, G):  # TODO ikke bruke optimization her?
         print("alpha agent", i)
         print(mod.eval(alpha_mms_agents[i]).as_decimal(3))
 
-    return opt.check() == sat
+    return is_sat == sat
 
 
 def is_efx_possible(n, m, V):
@@ -494,7 +497,7 @@ def find_valuation_function_with_no_ef1_equal_valuation_functions(n, m, G):
 
 def find_valuation_function_and_graph_with_no_ef1(n, m):
     s = Solver()
-
+    s.set("timeout", 7200000)
     # A  keeps track of the allocated items
     A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
          for i in range(n)]
@@ -556,9 +559,9 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
     print("valuation_function", valuation_function)
     print("discovered_graph:", matrix)
 
-    graph = Graph.Adjacency(matrix, mode="max")
+    # graph = Graph.Adjacency(matrix, mode="max")
 
-    return (is_sat == sat, valuation_function, graph)
+    return (is_sat == sat, valuation_function, matrix)
 
 
 def find_valuation_function_and_graph_and_agents_with_no_ef1(m):

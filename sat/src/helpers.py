@@ -413,7 +413,8 @@ def get_mms_for_this_agent(this_agent, n, m, V, G):
         opt.add(mms <= other_agents_bundle_value)
 
     opt.add(get_formula_for_one_item_to_one_agent(A, n, m))
-    opt.add(get_edge_conflicts(G, A, n))
+    if G != None:
+        opt.add(get_edge_conflicts(G, A, n))
     opt.maximize(mms)
     res = opt.check()
     print("mms this agent:", res)
@@ -422,7 +423,7 @@ def get_mms_for_this_agent(this_agent, n, m, V, G):
         return 0, res
     mod = opt.model()
     # print(mod)
-    print(type(mod[mms]))
+    print(mod[mms])
 
     return mod[mms], res
 
