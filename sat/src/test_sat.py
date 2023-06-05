@@ -243,6 +243,65 @@ def test_ef1_with_conflicts_csv():
         for row in rows:
             writer.writerow(row)
 
+    
+def test_ef1_with_connectivity_csv():
+
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2,3)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+        max_degree = 0
+        graph = None
+        
+        
+        while max_degree == 0:
+            p = random()
+            
+            print("finding new graph, p:", p)
+            
+            graph = Graph.Erdos_Renyi(n=m, p=p, directed=False)
+            max_degree = max(Graph.degree(graph))
+        print("found graph")
+
+        plot(graph, target='Erdos_Renyi.pdf')
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        result = is_ef1_with_connectivity_possible(
+                n, m, V, graph)
+        # assert result != unsat, "MMS isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        if result == unknown:
+            timed_out_counter = timed_out_counter + 1
+            
+        
+    rows=zip(times,agents,items, results)
+    print(timed_out_counter)
+
+    with open("ef1_with_connectivity.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results"))
+        for row in rows:
+            writer.writerow(row)
   
 def test_efx_with_conflicts_csv():
 
@@ -1364,10 +1423,11 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
-    test_is_agent_graph_connected()
-    test_ef1_with_connectivity_when_it_exists()
-    test_ef1_with_connectivity_when_it_exists_2()
-    test_ef1_with_connectivity_when_it_does_not_exist2()
+    # test_is_agent_graph_connected()
+    # test_ef1_with_connectivity_when_it_exists()
+    # test_ef1_with_connectivity_when_it_exists_2()
+    # test_ef1_with_connectivity_when_it_does_not_exist2()
+    test_ef1_with_connectivity_csv()
     # test_is_graph_connected()
 
     # test_discover_valuations_and_graph_and_agents_only_paths()

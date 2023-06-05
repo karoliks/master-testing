@@ -467,6 +467,8 @@ def is_graph_connected(graph):
 
 def is_ef1_with_connectivity_possible(n, m, V, G_graph):
     s = Solver()
+    s.set("timeout", 300000)
+    
 
     # Make sure that the number of nodes in the graph matches the number of items and the valuation function
     assert m == G_graph.vcount(), "The number of items do not match the size of the graph"
@@ -484,7 +486,7 @@ def is_ef1_with_connectivity_possible(n, m, V, G_graph):
 
     is_sat = s.check()
     print(is_sat)
-    return is_sat == sat
+    return is_sat
 
 
 def find_valuation_function_with_no_ef1(n, m, G):
