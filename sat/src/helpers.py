@@ -23,6 +23,117 @@ def max_in_product_array_bool(d_i_j, v_i, m):
     return max_value
 
 
+def get_edge_connectivity_formulas(G, A, n):
+
+    formulas = []
+    for agent in range(n):
+        # -1 will make the function not care about the missing item
+        formulas.append(
+            is_graph_connected_after_removing_item(G, A[agent], -1, agent))
+
+    return And(formulas)
+
+def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
+    formulas = []
+
+    for i in range(n):
+        for j in range(n):
+
+            if i == j:
+                continue
+
+            # Check that there is no envy once an item is possibly dropped
+            # formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+            #                 Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
+
+            formulas.append(Or([(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
+                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) -
+                            If(
+                                And(A[j][potentially_removed_item],
+                                    is_graph_connected_after_removing_item(
+                                        G, A[j], potentially_removed_item, j)
+                                    ),
+                                V[i][potentially_removed_item],
+                                0)
+                            ) for potentially_removed_item in range(m)]))
+
+    return And([formula for formula in formulas])
+
+def is_agent_graph_connected(graph, allocated_goods_to_this_agent, item_to_remove):
+    s = Solver()
+    s.add(is_graph_connected_after_removing_item(
+        graph, allocated_goods_to_this_agent, item_to_remove, 0))
+    is_sat = s.check()
+    print(is_sat)
+    return is_sat == sat
+
+
+def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent, item_to_remove, agent):
+    formulas = []
+    B = BoolSort()
+    NodeSort = Datatype('Node'+str(agent)+str(item_to_remove))
+
+    vertices = [v for v in range(graph.vcount())]
+
+    # Setup
+    #################
+    for vertex in vertices:
+        NodeSort.declare(str(vertex))
+    NodeSort = NodeSort.create()
+
+    vs = {}
+    for vertex in vertices:
+        vs[vertex] = getattr(NodeSort, str(vertex))
+
+    EdgeConection = Function('EdgeConection'+str(agent)+str(item_to_remove),
+                             NodeSort,
+                             NodeSort, B)
+    TC_EdgeConection = TransitiveClosure(EdgeConection)
+
+    # Make edges go both ways (since they are undirected)
+    x = Const("x"+str(agent)+str(item_to_remove), NodeSort)
+    y = Const("y"+str(agent)+str(item_to_remove), NodeSort)
+    formulas.append(ForAll([x, y], Implies(
+        EdgeConection(x, y), EdgeConection(y, x))))
+
+    # Give information about the given graph
+    ###########################################
+    adjacency = graph.get_adjacency()
+
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+
+            # Say where there is and where there is not edges in the graph
+            formulas.append(If(And(
+                allocated_goods_to_this_agent[vertex1],
+                allocated_goods_to_this_agent[vertex2],
+                vertex1 != item_to_remove,
+                vertex2 != item_to_remove,
+                adjacency[vertex1][vertex2] == 1),
+                EdgeConection(vs[vertex1], vs[vertex2]),
+                Not(EdgeConection(vs[vertex1], vs[vertex2]))
+            ))
+
+    # Check connectivity for whole graph by looking at the transitive closure
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            if vertex1 == item_to_remove or vertex2 == item_to_remove:
+                continue
+
+            formulas.append(If(And(
+                allocated_goods_to_this_agent[vertex1],
+                allocated_goods_to_this_agent[vertex2]),
+                TC_EdgeConection(
+                vs[vertex1], vs[vertex2]) == True,
+                True))
+
+    return And(formulas)
+
+
 def get_edge_conflicts(G, A, n):
     conflicts = []
     # Enforce the conflicts from the graph

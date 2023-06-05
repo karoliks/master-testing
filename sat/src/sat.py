@@ -1,7 +1,7 @@
 from z3 import *
 from igraph import *
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_equal_valuation_functions, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_edge_connectivity_formulas, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_equal_valuation_functions, get_formula_for_ensuring_ef1_outer_good, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
 
 
 
@@ -23,16 +23,6 @@ def is_ef1_possible(n, m, V):
 
 # TODO:: lage en test som sjekker ate denne funker riktig
 
-
-def get_edge_connectivity_formulas(G, A, n):
-
-    formulas = []
-    for agent in range(n):
-        # -1 will make the function not care about the missing item
-        formulas.append(
-            is_graph_connected_after_removing_item(G, A[agent], -1, agent))
-
-    return And(formulas)
 
 # T)D) kanskje ikke bruke nabimatrise, men en fynskjon? https://stackoverflow.com/questions/72507692/z3-connected-components
 
@@ -322,31 +312,7 @@ def get_bundle_graph_for_agent(A, G, n, m):
             # A[n][m]
 
 
-def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
-    formulas = []
 
-    for i in range(n):
-        for j in range(n):
-
-            if i == j:
-                continue
-
-            # Check that there is no envy once an item is possibly dropped
-            # formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-            #                 Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
-
-            formulas.append(Or([(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-                            Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) -
-                            If(
-                                And(A[j][potentially_removed_item],
-                                    is_graph_connected_after_removing_item(
-                                        G, A[j], potentially_removed_item, j)
-                                    ),
-                                V[i][potentially_removed_item],
-                                0)
-                            ) for potentially_removed_item in range(m)]))
-
-    return And([formula for formula in formulas])
 
 #             Not(
 #                 get_formula_for_ensuring_ef1_unknown_agents(
@@ -494,79 +460,7 @@ def is_graph_connected(graph):
     return s.check() == sat
 
 
-def is_agent_graph_connected(graph, allocated_goods_to_this_agent, item_to_remove):
-    s = Solver()
-    s.add(is_graph_connected_after_removing_item(
-        graph, allocated_goods_to_this_agent, item_to_remove, 0))
-    is_sat = s.check()
-    print(is_sat)
-    return is_sat == sat
 
-
-def is_graph_connected_after_removing_item(graph, allocated_goods_to_this_agent, item_to_remove, agent):
-    formulas = []
-    B = BoolSort()
-    NodeSort = Datatype('Node'+str(agent)+str(item_to_remove))
-
-    vertices = [v for v in range(graph.vcount())]
-
-    # Setup
-    #################
-    for vertex in vertices:
-        NodeSort.declare(str(vertex))
-    NodeSort = NodeSort.create()
-
-    vs = {}
-    for vertex in vertices:
-        vs[vertex] = getattr(NodeSort, str(vertex))
-
-    EdgeConection = Function('EdgeConection'+str(agent)+str(item_to_remove),
-                             NodeSort,
-                             NodeSort, B)
-    TC_EdgeConection = TransitiveClosure(EdgeConection)
-
-    # Make edges go both ways (since they are undirected)
-    x = Const("x"+str(agent)+str(item_to_remove), NodeSort)
-    y = Const("y"+str(agent)+str(item_to_remove), NodeSort)
-    formulas.append(ForAll([x, y], Implies(
-        EdgeConection(x, y), EdgeConection(y, x))))
-
-    # Give information about the given graph
-    ###########################################
-    adjacency = graph.get_adjacency()
-
-    for vertex1 in vertices:
-        for vertex2 in vertices:
-            if vertex1 == vertex2:
-                continue
-
-            # Say where there is and where there is not edges in the graph
-            formulas.append(If(And(
-                allocated_goods_to_this_agent[vertex1],
-                allocated_goods_to_this_agent[vertex2],
-                vertex1 != item_to_remove,
-                vertex2 != item_to_remove,
-                adjacency[vertex1][vertex2] == 1),
-                EdgeConection(vs[vertex1], vs[vertex2]),
-                Not(EdgeConection(vs[vertex1], vs[vertex2]))
-            ))
-
-    # Check connectivity for whole graph by looking at the transitive closure
-    for vertex1 in vertices:
-        for vertex2 in vertices:
-            if vertex1 == vertex2:
-                continue
-            if vertex1 == item_to_remove or vertex2 == item_to_remove:
-                continue
-
-            formulas.append(If(And(
-                allocated_goods_to_this_agent[vertex1],
-                allocated_goods_to_this_agent[vertex2]),
-                TC_EdgeConection(
-                vs[vertex1], vs[vertex2]) == True,
-                True))
-
-    return And(formulas)
 
 # TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
 
