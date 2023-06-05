@@ -4,8 +4,9 @@ from random import randint, random
 import time
 import csv
 from z3 import unsat, unknown, sat
+from helpers import is_agent_graph_connected
 
-from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_efx_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
+from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_efx_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization, is_ef1_with_connectivity_possible, is_graph_connected
 
 
 def test_sum():
@@ -242,6 +243,65 @@ def test_ef1_with_conflicts_csv():
         for row in rows:
             writer.writerow(row)
 
+    
+def test_ef1_with_connectivity_csv():
+
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2,3)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+        max_degree = 0
+        graph = None
+        
+        
+        while max_degree == 0:
+            p = random()
+            
+            print("finding new graph, p:", p)
+            
+            graph = Graph.Erdos_Renyi(n=m, p=p, directed=False)
+            max_degree = max(Graph.degree(graph))
+        print("found graph")
+
+        plot(graph, target='Erdos_Renyi.pdf')
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        result = is_ef1_with_connectivity_possible(
+                n, m, V, graph)
+        # assert result != unsat, "MMS isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        if result == unknown:
+            timed_out_counter = timed_out_counter + 1
+            
+        
+    rows=zip(times,agents,items, results)
+    print(timed_out_counter)
+
+    with open("ef1_with_connectivity.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results"))
+        for row in rows:
+            writer.writerow(row)
   
 def test_efx_with_conflicts_csv():
 
@@ -400,6 +460,70 @@ def test_ef1_with_conflicts():
         n, m, V_1, path) == False, "EF1 should not be possible in this case"
     assert is_ef1_with_conflicts_possible(
         n, m, V_2, path) == True, "EF1 should be possible in this case"
+
+
+def test_ef1_with_connectivity_when_it_exists():
+    n = 2
+    m = 6
+
+    V = np.array([[1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.]])
+
+    path = Graph.Ring(n=6, circular=False)
+    plot(path, target='path.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+
+
+def test_ef1_with_connectivity_when_it_exists_2():
+    # Almost envy-free allocations with connected bundles: When items are arranged on a path, we
+    # prove that connected EF1 allocations exist when there are two, three, or four agents
+
+    n = 2
+    m = 3
+
+    V = np.array([[1., 0., 1.], [1., 0., 1.]])
+
+    path = Graph.Ring(n=3, circular=False)
+    plot(path, target='path.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+
+# TODO usikker på om denne er rett
+def test_ef1_with_connectivity_when_it_does_not_exist():
+    n = 2
+    m = 4
+
+    V = np.array([[1., 1., 1., 1.], [1., 1., 1., 1.]])
+
+    star = Graph.Star(n=4)
+    plot(star, target='star.pdf')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, star) == False, "EF1 should not be possible in this case (connected bundle, star)"
+
+# From: The Price of Connectivity in Fair Division
+# We now address the case of three agents. Assume that G is neither a path nor a star with three edges. Suppose first that there is a
+# vertex v with degree at least 4. Consider three agents who have identical utilities with
+# value 1 on v and four of its neighbors, and 0 on all other vertices. In any connected allocation,
+# an agent who does not get v receives value at most 1, while the bundle of the agent who gets v
+# has value at least 3 to her. Hence, the allocation is not EF1.
+
+
+def test_ef1_with_connectivity_when_it_does_not_exist2():
+    n = 3
+    m = 5
+
+    V = np.array(
+        [[1., 1., 1., 1., 1.], [1., 1., 1., 1., 1.],  [1., 1., 1., 1., 1.]])
+
+    star = Graph.Star(n=5)
+    plot(star, target='star.pdf', vertex_label=range(m), vertex_size=32,
+         vertex_color='#bcf6f7')
+
+    assert is_ef1_with_connectivity_possible(
+        n, m, V, star) == False, "EF1 should not be possible in this case (connected bundle, star)"
 
 
 def test_mms_with_conflicts():
@@ -938,6 +1062,47 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
+def test_is_graph_connected():
+    graph = Graph.Ring(n=3, circular=False)
+    edges = graph.get_edgelist()
+    assert is_graph_connected(
+        graph) == True, "The path graph is connected, so the answer should be true."
+    graph.delete_edges([edges[0]])
+    plot(graph, target='not_connected.pdf')
+
+    assert is_graph_connected(
+        graph) == False, "The graph is not a connected component, so the answer should be false."
+
+    graph = Graph.Full_Bipartite(3, 4)
+    edges = graph.get_edgelist()
+    assert is_graph_connected(
+        graph) == True, "The path graph is connected, so the answer should be true."
+    plot(graph, target='not_connected_full_bipartie.pdf')
+    graph.delete_edges([edges[0]])
+    assert is_graph_connected(
+        graph) == True, "The graph is a connected component, so the answer should be true."
+
+
+def test_is_agent_graph_connected():
+    graph = Graph.Ring(n=3, circular=False)
+    allocated = [True, True, True]
+
+    assert is_agent_graph_connected(
+        graph, allocated, -1) == True, "The agent graph is connected, so the answer should be true."
+
+    assert is_agent_graph_connected(
+        graph, allocated, 1) == False, "The agent graph is not connected, so the answer should be false."
+
+    allocated = [True, False, True]
+
+    assert is_agent_graph_connected(
+        graph, allocated, -1) == False, "The agent graph is not a connected component, so the answer should be false."
+
+    assert is_agent_graph_connected(
+        graph, allocated, 0) == True, "The agent graph is a connected component, so the answer should be true."
+
+
+
 def test_discover_valuations_and_graph_hummel_csv():
     
     times = []
@@ -1258,6 +1423,13 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_graph()
     # test_discover_valuations_and_graph_and_agents()
+    # test_is_agent_graph_connected()
+    # test_ef1_with_connectivity_when_it_exists()
+    # test_ef1_with_connectivity_when_it_exists_2()
+    # test_ef1_with_connectivity_when_it_does_not_exist2()
+    test_ef1_with_connectivity_csv()
+    # test_is_graph_connected()
+
     # test_discover_valuations_and_graph_and_agents_only_paths()
     # test_discover_valuations_and_graph_and_agents_ternary_vals()
     # test_path()
@@ -1284,6 +1456,6 @@ if __name__ == "__main__":
     # test_mms_with_conflicts_csv()
     # test_send_valuations_for_checking_hummel()
     # test_discover_valuations_and_graph_csv()
-    test_ef1_with_conflicts_csv()
+    # test_ef1_with_conflicts_csv()
     
     print("Everything passed")

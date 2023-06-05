@@ -1,7 +1,7 @@
 from z3 import *
 from igraph import *
 
-from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_equal_valuation_functions, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
+from helpers import get_edge_conflicts, get_edge_conflicts_adjacency_matrix, get_edge_conflicts_adjacency_matrix_unknown_agents, get_edge_conflicts_int, get_edge_conflicts_path_array, get_edge_connectivity_formulas, get_formula_for_correct_removing_of_items, get_formula_for_ensuring_ef1, get_formula_for_ensuring_ef1_equal_valuation_functions, get_formula_for_ensuring_ef1_outer_good, get_formula_for_ensuring_ef1_unknown_agents, get_formula_for_ensuring_ef1_unknown_agents_boolean_values, get_formula_for_ensuring_efx, get_formula_for_ensuring_efx_unknown_agents, get_formula_for_one_item_to_one_agent, get_formula_for_one_item_to_one_agent_int, get_formula_for_one_item_to_one_agent_uknown_agents, get_formula_for_path, get_max_degree_less_than_agents, get_mms_for_this_agent, get_mms_for_this_agent_manual_optimization, get_total_edges, get_upper_half_zero
 
 
 
@@ -20,6 +20,11 @@ def is_ef1_possible(n, m, V):
 
     return s.check() == sat
 
+
+# TODO:: lage en test som sjekker ate denne funker riktig
+
+
+# T)D) kanskje ikke bruke nabimatrise, men en fynskjon? https://stackoverflow.com/questions/72507692/z3-connected-components
 
 def is_ef1_with_conflicts_possible(n, m, V, G):
     s = Solver()
@@ -295,6 +300,20 @@ def find_valuation_function_and_agents_with_no_efx(m):
 #                     G, [[a for a in aa] for aa in A], m)
 #             ),
 
+# TODO fix denne er ikke riktig, men er god for å tenke gjennom til den andre funkjsonen
+
+
+def get_bundle_graph_for_agent(A, G, n, m):
+    for agent in range(n):
+        for row in range(m):
+            for col in range(row):
+                is_outer = If(Or(A[agent][row], A[agent][col]))
+
+            # A[n][m]
+
+
+
+
 #             Not(
 #                 get_formula_for_ensuring_ef1_unknown_agents(
 #                     [[a for a in aa] for aa in A], V, n, m)
@@ -389,6 +408,85 @@ def find_valuation_function_with_no_efx(n, m):
     print()
     return (is_sat == sat, valuation_function)
 
+
+
+def is_graph_connected(graph):
+    B = BoolSort()
+    s = Solver()
+    NodeSort = Datatype('Node')
+
+    vertices = [v for v in range(graph.vcount())]
+
+    # Setup
+    #################
+    for vertex in vertices:
+        NodeSort.declare(str(vertex))
+    NodeSort = NodeSort.create()
+
+    vs = {}
+    for vertex in vertices:
+        vs[vertex] = getattr(NodeSort, str(vertex))
+
+    EdgeConection = Function('EdgeConection',
+                             NodeSort,
+                             NodeSort, B)
+    TC_EdgeConection = TransitiveClosure(EdgeConection)
+
+    # Make edges go both ways (since they are undirected)
+    x, y = Consts("x y", NodeSort)
+    s.add(ForAll([x, y], Implies(EdgeConection(x, y), EdgeConection(y, x))))
+
+    # Give information about the given graph
+    ###########################################
+    adjacency = graph.get_adjacency()
+
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            # Say where there is and where there is not edges in the graph
+            s.add(If(adjacency[vertex1][vertex2] == 1,
+                     EdgeConection(vs[vertex1], vs[vertex2]),
+                     Not(EdgeConection(vs[vertex1], vs[vertex2]))
+                     ))
+
+    # Check connectivity for whole graph by looking at the transitive closure
+    for vertex1 in vertices:
+        for vertex2 in vertices:
+            if vertex1 == vertex2:
+                continue
+            s.add(TC_EdgeConection(vs[vertex1], vs[vertex2]) == True)
+
+    return s.check() == sat
+
+
+
+
+# TODO tror ikke dene er helt riktig! Hva om grafen er splittet? Nå sjekker den vel bare om hver node henger sammen med en annen node, men ikke om alle nodene i bundelen hengge sammen.
+
+
+def is_ef1_with_connectivity_possible(n, m, V, G_graph):
+    s = Solver()
+    s.set("timeout", 300000)
+    
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G_graph.vcount(), "The number of items do not match the size of the graph"
+    assert m == V[0].size, "The number of items do not match the valuation function"
+
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    G = G_graph  # .get_adjacency()
+
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    s.add(get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m))
+    s.add(get_edge_connectivity_formulas(G, A, n))
+
+    is_sat = s.check()
+    print(is_sat)
+    return is_sat
 
 
 def find_valuation_function_with_no_ef1(n, m, G):
