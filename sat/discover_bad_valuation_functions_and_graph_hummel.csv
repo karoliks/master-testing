@@ -1,3 +1,4 @@
-times,agents,items,results,graphs,valuations
-5.36,4,6,True,[[False, False, False, False, False, False], [True, False, False, False, False, False], [True, False, False, False, False, False], [False, True, True, False, False, False], [False, True, True, False, False, False], [True, False, False, True, True, False]],[7, 5, 4, 7, 8, 6, 6, 2, 3, 4, 7, 1, 5, 1, 2, 6, 7, 3, 8, 6, 7, 9, 10, 5]
-124.39,6,8,True
+times,agents,items,results,graphs
+5.16158652305603,4,6,sat,[[False, False, False, False, False, False], [True, False, False, False, False, False], [True, False, False, False, False, False], [False, True, True, False, False, False], [False, True, True, False, False, False], [True, False, False, True, True, False]]
+131.08655524253845,5,7,sat,[[False, False, False, False, False, False, False], [True, False, False, False, False, False, False], [True, False, False, False, False, False, False], [False, True, True, False, False, False, False], [True, False, False, True, False, False, False], [False, True, True, False, True, False, False], [False, True, True, True, True, False, False]]
+3978.4136550426483,6,8,sat,[[False, False, False, False, False, False, False, False], [True, False, False, False, False, False, False, False], [True, True, False, False, False, False, False, False], [True, False, True, False, False, False, False, False], [True, True, False, True, False, False, False, False], [False, True, False, True, False, False, False, False], [True, False, True, False, True, True, False, False], [False, True, True, True, True, False, True, False]]

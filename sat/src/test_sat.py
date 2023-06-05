@@ -1133,26 +1133,124 @@ def test_discover_valuations_and_graph_hummel_csv():
             graph = Graph.Adjacency(matrix)
             plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
                 vertex_color='#bcf6f7')
-            
+        elif result == unknown:
+            break    
 
         times.append(elapsed_time)
         agents.append(n)
         items.append(m)
         results.append(result)
-        graphs.append()
-        valuation_functions.append(matrix)
+        graphs.append(matrix)
+        valuation_functions.append(V)
+        
+        
+    rows=zip(times,agents,items, results, graphs)
+    print("finished")
+
+    with open("discover_bad_valuation_functions_and_graph_hummel.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results", "graphs"))
+
+        for row in rows:
+            writer.writerow(row)
+    
+
+
+
+def test_discover_valuations_hummel_csv():
+    
+    times = []
+    agents = []
+    items = []
+    valuation_functions = []
+    results = []
+    timed_out_counter = 0
+    for i in range(4,10):
+        n = i
+        m = 3 + n-1
+
+        graph = Graph.Full_Bipartite(3, n-1)
+        
+        print("iteration:",i,"n:",n,"m:", m)
+
+    
+        st = time.time()
+        result, V = find_valuation_function_with_no_ef1(
+        n, m, graph)
+        et = time.time()
+
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+        if result == unknown:
+            break
+
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        valuation_functions.append(V)
         
         
     rows=zip(times,agents,items, results)
     print("finished")
 
-    with open("discover_bad_valuation_functions_and_graph_hummel.csv", "w") as f:
+    with open("discover_bad_valuation_functions_hummel.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(("times", "agents", "items", "results", "vs"))
 
         for row in rows:
             writer.writerow(row)
     
+
+def test_discover_valuations_knn_csv():
+    
+    times = []
+    agents = []
+    items = []
+    valuation_functions = []
+    results = []
+    timed_out_counter = 0
+    for i in range(4,10):
+        n = i
+        m = n-1 + n-1
+
+        graph = Graph.Full_Bipartite(n-1, n-1)
+        
+        print("iteration:",i,"n:",n,"m:", m)
+
+    
+        st = time.time()
+        result, V = find_valuation_function_with_no_ef1(
+        n, m, graph)
+        et = time.time()
+
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+        if result == unknown:
+            break
+
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        valuation_functions.append(V)
+        
+        
+    rows=zip(times,agents,items, results)
+    print("finished")
+
+    with open("discover_bad_valuation_functions_knn.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results", "vs"))
+
+        for row in rows:
+            writer.writerow(row)
+    
+
 
 
 
@@ -1403,6 +1501,10 @@ def test_path():
 def test_is_path_always_ef1():
     print(is_path_always_ef1())
 
+def create_graph():
+    g = Graph.Adjacency([[False, False, False, False, False, False, False, False], [True, False, False, False, False, False, False, False], [True, True, False, False, False, False, False, False], [True, False, True, False, False, False, False, False], [True, True, False, True, False, False, False, False], [False, True, False, True, False, False, False, False], [True, False, True, False, True, True, False, False], [False, True, True, True, True, False, True, False]])
+    plot(g, target='creted_graph.pdf')
+
 
 if __name__ == "__main__":
     # test_sum()
@@ -1427,7 +1529,7 @@ if __name__ == "__main__":
     # test_ef1_with_connectivity_when_it_exists()
     # test_ef1_with_connectivity_when_it_exists_2()
     # test_ef1_with_connectivity_when_it_does_not_exist2()
-    test_ef1_with_connectivity_csv()
+    # test_ef1_with_connectivity_csv()
     # test_is_graph_connected()
 
     # test_discover_valuations_and_graph_and_agents_only_paths()
@@ -1457,5 +1559,7 @@ if __name__ == "__main__":
     # test_send_valuations_for_checking_hummel()
     # test_discover_valuations_and_graph_csv()
     # test_ef1_with_conflicts_csv()
-    
+    # test_discover_valuations_knn_csv()
+    # test_discover_valuations_and_graph_hummel_csv()
+    create_graph()
     print("Everything passed")

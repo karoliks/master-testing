@@ -525,7 +525,7 @@ def find_valuation_function_with_no_ef1(n, m, G):
         )
     )
     )
-    s.set("timeout", 8600000)  # TODO increase timeout
+    s.set("timeout", 7200000)  # 2h
     
 
     valuation_function = []
@@ -548,7 +548,7 @@ def find_valuation_function_with_no_ef1(n, m, G):
     print()
     print(valuation_function)
     print()
-    return (is_sat == sat, valuation_function)
+    return (is_sat, valuation_function)
 
 
 
