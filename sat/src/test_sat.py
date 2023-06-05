@@ -3,9 +3,9 @@ from igraph import *
 from random import randint, random
 import time
 import csv
-from z3 import unsat, unknown
+from z3 import unsat, unknown, sat
 
-from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
+from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_efx_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization
 
 
 def test_sum():
@@ -183,6 +183,126 @@ def test_mms_with_conflicts_csv():
             writer.writerow(row)
 
     
+def test_ef1_with_conflicts_csv():
+
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2, 10)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+        max_degree = n
+        graph = None
+        
+        
+        while max_degree >= n or max_degree == 0:
+            p = random()
+            
+            print("finding new graph, p:", p)
+            
+            graph = Graph.Erdos_Renyi(n=m, p=p, directed=False)
+            max_degree = max(Graph.degree(graph))
+        print("found graph")
+
+        plot(graph, target='Erdos_Renyi.pdf')
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        result = is_ef1_with_conflicts_possible(
+                n, m, V, graph)
+        # assert result != unsat, "MMS isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        if result == unknown:
+            timed_out_counter = timed_out_counter + 1
+            
+        
+    rows=zip(times,agents,items, results)
+    print(timed_out_counter)
+
+    with open("ef1_with_conflicts.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results"))
+        for row in rows:
+            writer.writerow(row)
+
+  
+def test_efx_with_conflicts_csv():
+
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    timed_out_counter = 0
+    for i in range(100):
+        n = randint(2, 10)#50)
+        m = randint(n*2, n*4)
+        print("iteration:",i,"n:",n,"m:", m)
+        max_degree = n
+        graph = None
+        
+        
+        while max_degree >= n or max_degree == 0:
+            p = random()
+            
+            print("finding new graph, p:", p)
+            
+            graph = Graph.Erdos_Renyi(n=m, p=p, directed=False)
+            max_degree = max(Graph.degree(graph))
+        print("found graph")
+
+        plot(graph, target='Erdos_Renyi.pdf')
+        V = np.random.rand(n, m)
+        
+        for i in range(n):
+            V[i] = np.round(1000 * V[i] / sum(V[i]) )
+
+        # print(V)
+        st = time.time()
+        result = is_efx_with_conflicts_possible(
+                n, m, V, graph)
+        # assert result != unsat, "MMS isnt possible?!"
+        
+        et = time.time()
+
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        if result == unknown:
+            timed_out_counter = timed_out_counter + 1
+            
+        
+    rows=zip(times,agents,items, results)
+    print(timed_out_counter)
+
+    with open("efx_with_conflicts.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results"))
+        for row in rows:
+            writer.writerow(row)
+
+      
 
 def test_discover_bad_valuation_functions_efx_1():
     n = 2
@@ -763,10 +883,11 @@ def test_discover_valuations_and_graph_csv():
     agents = []
     items = []
     results = []
+    graphs = []
     timed_out_counter = 0
-    for i in range(4,10):
+    for i in range(4,5):
         n = i
-        m = 3 + n-1
+        m = n-1 + n-1
         
         print("iteration:",i,"n:",n,"m:", m)
 
@@ -786,11 +907,12 @@ def test_discover_valuations_and_graph_csv():
         agents.append(n)
         items.append(m)
         results.append(result)
+        graphs.append(graph)
         
     rows=zip(times,agents,items, results)
     print("finished")
 
-    with open("discover_bad_valuation_functions_and_graph.csv", "w") as f:
+    with open("discover_bad_valuation_functions_and_graph_kn1n1.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(("times", "agents", "items", "results"))
         for row in rows:
@@ -816,12 +938,14 @@ def test_discover_valuations_and_graph_and_agents():
         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
 
 
-def test_discover_valuations_and_graph_csv():
+def test_discover_valuations_and_graph_hummel_csv():
     
     times = []
     agents = []
     items = []
+    valuation_functions = []
     results = []
+    graphs = []
     timed_out_counter = 0
     for i in range(4,10):
         n = i
@@ -831,9 +955,66 @@ def test_discover_valuations_and_graph_csv():
 
     
         st = time.time()
+        result, V, matrix = find_valuation_function_and_graph_with_no_ef1(
+        n, m)
+        et = time.time()
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+        if result == sat:
+            graph = Graph.Adjacency(matrix)
+            plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
+                vertex_color='#bcf6f7')
+            
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        graphs.append()
+        valuation_functions.append(matrix)
+        
+        
+    rows=zip(times,agents,items, results)
+    print("finished")
+
+    with open("discover_bad_valuation_functions_and_graph_hummel.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results", "vs"))
+
+        for row in rows:
+            writer.writerow(row)
+    
+
+
+
+def test_discover_valuations_and_graph__knn_csv():
+    
+    times = []
+    agents = []
+    items = []
+    results = []
+    valuation_functions = []
+    timed_out_counter = 0
+    for i in range(4,10):
+        n = i
+        m = n-1 + n-1
+        
+        print("iteration:",i,"n:",n,"m:", m)
+
+    
+        st = time.time()
         result, V, graph = find_valuation_function_and_graph_with_no_ef1(
         n, m)
         et = time.time()
+        if result == sat:
+            graph = Graph.Adjacency(graph)
+            plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
+                vertex_color='#bcf6f7')
+            
 
         # assert is_ef1_with_conflicts_possible(
         #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
@@ -845,13 +1026,14 @@ def test_discover_valuations_and_graph_csv():
         agents.append(n)
         items.append(m)
         results.append(result)
+        valuation_functions.append(V)
         
-    rows=zip(times,agents,items, results)
+    rows=zip(times,agents,items, results, valuation_functions)
     print("finished")
 
-    with open("discover_bad_valuation_functions_and_graph.csv", "w") as f:
+    with open("discover_bad_valuation_functions_and_graph_knn.csv", "w") as f:
         writer = csv.writer(f)
-        writer.writerow(("times", "agents", "items", "results"))
+        writer.writerow(("times", "agents", "items", "results", "vs"))
         for row in rows:
             writer.writerow(row)
     
@@ -1101,6 +1283,7 @@ if __name__ == "__main__":
     # test_mms_no_conflicts_csv()
     # test_mms_with_conflicts_csv()
     # test_send_valuations_for_checking_hummel()
-    test_discover_valuations_and_graph_csv()
+    # test_discover_valuations_and_graph_csv()
+    test_ef1_with_conflicts_csv()
     
     print("Everything passed")

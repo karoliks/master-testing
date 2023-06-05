@@ -40,6 +40,27 @@ def is_ef1_with_conflicts_possible(n, m, V, G):
     return s.check() == sat
 
 
+def is_efx_with_conflicts_possible(n, m, V, G):
+    s = Solver()
+    s.set("timeout", 300000)
+
+    # Make sure that the number of nodes in the graph matches the number of items and the valuation function
+    assert m == G.vcount(), "The number of items do not match the size of the graph"
+    assert m == V[0].size, "The number of items do not match the valuation function"
+    # Convert to python list, in case it is made with numpy
+    V = V.tolist()
+    # A  keeps track of the allocated items
+    A = [[Bool("a_%s_%s" % (i+1, j+1)) for j in range(m)]
+         for i in range(n)]
+
+    s.add(get_formula_for_one_item_to_one_agent(A, n, m))
+    s.add(get_formula_for_ensuring_efx(A, V, n, m))
+    s.add(get_edge_conflicts(G, A, n))
+
+    return s.check() 
+
+
+
 def maximin_shares(n, m, V, G=None):  # TODO ikke bruke optimization her?
 
     if G != None:
@@ -561,7 +582,7 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
 
     # graph = Graph.Adjacency(matrix, mode="max")
 
-    return (is_sat == sat, valuation_function, matrix)
+    return (is_sat, valuation_function, matrix)
 
 
 def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
