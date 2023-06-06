@@ -19,7 +19,7 @@ def test_efx_no_conflicts_1():
     V = np.ones((n, m))
 
     assert is_efx_possible(
-        n, m, V) == True, "EFX should be possible when the valuations are identical"
+        n, m, V) == sat, "EFX should be possible when the valuations are identical"
 
 
 def test_efx_no_conflicts_2():
@@ -28,7 +28,7 @@ def test_efx_no_conflicts_2():
     V = np.array([[1., 2., 0.], [3., 4., 0.]])
     
     assert is_efx_possible(
-        n, m, V) == True, "EFX should be possible when there are only two agents"
+        n, m, V) == sat, "EFX should be possible when there are only two agents"
 
 
 def test_efx_no_conflicts_csv():
@@ -1157,6 +1157,62 @@ def test_discover_valuations_and_graph_hummel_csv():
 
 
 
+def test_discover_valuations_and_graph_and_agents_csv():
+    
+    times = []
+    agents = []
+    items = []
+    valuation_functions = []
+    results = []
+    graphs = []
+    timed_out_counter = 0
+    for i in range(4,12):
+        n = -1
+        m = 3 + i-1
+        
+        print("iteration:",i,"m:", m)
+
+    
+        st = time.time()
+        result, V, matrix, n = find_valuation_function_and_graph_and_agents_with_no_ef1(
+        m)
+        et = time.time()
+        graph = matrix
+
+        # assert is_ef1_with_conflicts_possible(
+        #         n, m, V, graph) == False, "The program was not able to discover a set of valuation functions were EF1 is not possible"
+        
+        elapsed_time = et - st
+        print("elapsed_time", elapsed_time)
+        if result == sat:
+            
+            graph = Graph.Adjacency(matrix, mode="max")
+            plot(graph, target='from_z3.pdf', vertex_label=range(m), vertex_size=32,
+                vertex_color='#bcf6f7')
+        elif result == unknown:
+            break    
+
+        times.append(elapsed_time)
+        agents.append(n)
+        items.append(m)
+        results.append(result)
+        graphs.append(matrix)
+        valuation_functions.append(V)
+        
+        
+    rows=zip(times,agents,items, results, graphs)
+    print("finished")
+
+    with open("discover_bad_valuation_functions_and_graph_hummel.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow(("times", "agents", "items", "results", "graphs"))
+
+        for row in rows:
+            writer.writerow(row)
+    
+
+
+
 def test_discover_valuations_hummel_csv():
     
     times = []
@@ -1445,7 +1501,7 @@ def test_discover_valuations_and_graph_and_agents_binary_vals_csv():
     times = []
     results = []
     items = []
-    for m in range(3,8):
+    for m in range(3,10):
         
         print("m:", m)
 
@@ -1464,6 +1520,8 @@ def test_discover_valuations_and_graph_and_agents_binary_vals_csv():
         times.append(elapsed_time)
         results.append(result)
         items.append(m)
+        if result == unknown:
+            break
         
     rows=zip(items,times,results)
 
@@ -1508,8 +1566,9 @@ def create_graph():
 
 if __name__ == "__main__":
     # test_sum()
-    # test_efx_no_conflicts_1()
-    # test_efx_no_conflicts_2()
+    test_efx_no_conflicts_1()
+    test_efx_no_conflicts_2()
+    # test_ef1_no_conflicts_1()
     # test_discover_bad_valuation_functions_efx_1()
     # test_ef1_no_conflicts_1()
     # test_ef1_no_conflicts_2()
@@ -1561,5 +1620,6 @@ if __name__ == "__main__":
     # test_ef1_with_conflicts_csv()
     # test_discover_valuations_knn_csv()
     # test_discover_valuations_and_graph_hummel_csv()
-    create_graph()
+    # test_discover_valuations_and_graph_and_agents_csv()
+    # create_graph()
     print("Everything passed")

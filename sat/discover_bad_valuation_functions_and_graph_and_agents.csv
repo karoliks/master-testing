@@ -1,0 +1,2 @@
+times,agents,items,results,graphs
+30.752872705459595,4,6,sat,"[[False, False, False, False, False, False], [True, False, False, False, False, False], [False, True, False, False, False, False], [False, True, False, False, False, False], [True, False, True, True, False, False], [True, False, True, True, False, False]]"

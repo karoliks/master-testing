@@ -43,8 +43,6 @@ def get_formula_for_ensuring_ef1_outer_good(A, G, V, n, m):
                 continue
 
             # Check that there is no envy once an item is possibly dropped
-            # formulas.append(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
-            #                 Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) - max_in_product_array_bool_outer_items(A[j], V[i], G, i, j))
 
             formulas.append(Or([(Sum([V[i][g] * If(A[i][g], 1, 0) for g in range(m)]) >=
                             Sum([V[i][g] * If(A[j][g], 1, 0) for g in range(m)]) -
@@ -414,16 +412,33 @@ def get_formula_for_ensuring_ef1_unknown_agents_boolean_values(A, V, n, m):
     return And(formulas)
 
 
-def min_in_product_array_bool(d_i_j, v_i):
+def min_in_product_array_bool(d_i_j, v_i,m):
     # Using nefative number for values not allocated to be able to distinguish
     # between items between items with value equal to zero and items not allowed
     # to check for (not allocated to this agent)
-    product = [If(a, b, -10) for a, b in zip(d_i_j, v_i)]
-    m = product[0]
-    for v in product[1:]:
-        m = If(Or(And(v < m, v >= 0), m < 0), v, m) # TODO fjerne v >= 0 for å ikke bruke streng efx?
-    m = If()
-    return m
+    # product = [If(a, b,-10) for a, b in zip(d_i_j, v_i)]
+    # m = product[0]
+    # for v in product[1:]:
+    #     m = If(Or(And(v < m, v >= 0), m < 0), v, m) # TODO fjerne v >= 0 for å ikke bruke streng efx?
+    # # m = If(Not(Or(d_i_j)),0,m)
+    # return m
+    v_i = [If(a, b,b) for a, b in zip(d_i_j, v_i)] # TODO: bedre måte å unngå numpy?
+
+    min_v = -10
+    print(type(min_v), type(v_i[0]))
+    for i in range(m):
+        min_v = If(
+                    And(d_i_j[i],
+                        Or(
+                            min_v < 0,
+                            v_i[i] < min_v)
+                        )
+                        ,
+                    v_i[i], 
+                    min_v
+                ) # TODO legge til v > 0 for å ikke bruke streng efx?
+    min_v = If(min_v< 0,0,min_v) # The value will still be -10 if no items are allocated to the agent
+    return min_v
 
 
 def get_formula_for_ensuring_efx(A, V, n, m):
@@ -437,7 +452,7 @@ def get_formula_for_ensuring_efx(A, V, n, m):
 
             # Check that there is no envy once an item is possibly dropped
             formulas.append(Sum([If(A[i][g], V[i][g] , 0) for g in range(m)]) >=
-                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]))
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i],m))
 
     return And(formulas)
 
@@ -453,7 +468,7 @@ def get_formula_for_ensuring_efx_unknown_agents(A, V, n, m):
 
             # Check that there is no envy once an item is possibly dropped
             formulas.append(If(And(i < n, j < n),Sum([If(A[i][g], V[i][g], 0) for g in range(m)]) >=
-                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i]),True))
+                            Sum([If(A[j][g], V[i][g], 0) for g in range(m)]) - min_in_product_array_bool(A[j], V[i],m),True))
 
     return And(formulas)
 

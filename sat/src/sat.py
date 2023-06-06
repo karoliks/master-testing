@@ -685,6 +685,8 @@ def find_valuation_function_and_graph_with_no_ef1(n, m):
 
 def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
     s = Solver()
+    s.set("timeout", 7200000)  # 2h
+    
 
     n = Int("n")
 
@@ -756,13 +758,14 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1(m):
     print("valuation_function", valuation_function)
     print("discovered_graph:", matrix)
 
-    graph = Graph.Adjacency(matrix, mode="max")
+    # graph = Graph.Adjacency(matrix, mode="max")
 
-    return (is_sat == sat, valuation_function, graph, n_int)
+    return (is_sat, valuation_function, matrix, n_int)
 
 
 def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
     s = Solver()
+    s.set("timeout", 18000000)
 
     n = Int("n")
 
@@ -837,7 +840,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals(m):
     print("discovered_graph:", matrix)
 
 
-    return (is_sat == sat, valuation_function, graph, n_int)
+    return (is_sat, valuation_function, graph, n_int)
 
 
 def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
@@ -921,7 +924,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals(m):
 
     graph = Graph.Adjacency(matrix, mode="max")
 
-    return (is_sat == sat, valuation_function, graph, n_int)
+    return (is_sat, valuation_function, graph, n_int)
 
 
 def matrix_path(m):
