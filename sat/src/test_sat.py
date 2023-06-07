@@ -1416,7 +1416,7 @@ def test_discover_valuations_and_graph_and_agents_only_paths_csv():
     times = []
     results = []
     items = []
-    for i in range(3,8):
+    for i in range(3,13):
         
         print("iteration:",i,"m:", i)
 
@@ -1435,6 +1435,8 @@ def test_discover_valuations_and_graph_and_agents_only_paths_csv():
         times.append(elapsed_time)
         results.append(result)
         items.append(i)
+        if result == unknown:
+            break
         
     rows=zip(items,times,results)
 
@@ -1566,8 +1568,8 @@ def create_graph():
 
 if __name__ == "__main__":
     # test_sum()
-    test_efx_no_conflicts_1()
-    test_efx_no_conflicts_2()
+    # test_efx_no_conflicts_1()
+    # test_efx_no_conflicts_2()
     # test_ef1_no_conflicts_1()
     # test_discover_bad_valuation_functions_efx_1()
     # test_ef1_no_conflicts_1()
@@ -1605,7 +1607,7 @@ if __name__ == "__main__":
     # test_efx_no_conflicts_csv() 
     # test_discover_valuations_and_agents_efx_csv()
     # test_discover_bad_valuation_functions_csv()
-    # test_discover_valuations_and_graph_and_agents_only_paths_csv()
+    test_discover_valuations_and_graph_and_agents_only_paths_csv()
     # test_discover_valuations_and_graph_and_agents_binary_vals_csv()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_agents_efx()

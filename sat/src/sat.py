@@ -968,6 +968,8 @@ def matrix_path(m):
 def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
     s = Solver()
     print()
+    s.set("timeout", 18000000)  # TODO timeout is now 5 hours.
+    
     print("m:", m)
 
     n = Int("n")
@@ -1025,7 +1027,7 @@ def find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths(m):
 
     print("valuation_function", valuation_function)
 
-    return (is_sat == sat, valuation_function, n_int)
+    return (is_sat, valuation_function, n_int)
 
 # TODO:når jeg ikke har et -varianel t antall ting så er det vel ingengrunn til å lete etter en graf? kanvel bare gi den inn?
 
