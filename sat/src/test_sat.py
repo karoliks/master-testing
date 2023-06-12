@@ -6,7 +6,7 @@ import csv
 from z3 import unsat, unknown, sat
 from helpers import is_agent_graph_connected
 
-from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_efx_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares, maximin_shares_manual_optimization, is_ef1_with_connectivity_possible, is_graph_connected
+from sat import find_valuation_function_and_agents_with_no_efx, find_valuation_function_and_graph_and_agents_with_no_ef1, find_valuation_function_and_graph_and_agents_with_no_ef1_binary_vals, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths, find_valuation_function_and_graph_and_agents_with_no_ef1_only_paths_and_cycles, find_valuation_function_and_graph_and_agents_with_no_ef1_ternary_vals, find_valuation_function_and_graph_with_no_ef1, find_valuation_function_with_no_ef1, find_valuation_function_with_no_ef1_equal_valuation_functions, find_valuation_function_with_no_efx, get_mms_for_this_agent, is_ef1_possible, is_ef1_with_conflicts_possible, is_efx_possible, is_efx_with_conflicts_possible, is_path_always_ef1, matrix_path, maximin_shares, is_ef1_with_connectivity_possible, is_graph_connected
 
 
 def test_sum():
@@ -488,9 +488,8 @@ def test_ef1_with_connectivity_when_it_exists_2():
     plot(path, target='path.pdf')
 
     assert is_ef1_with_connectivity_possible(
-        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+        n, m, V, path) == sat, "EF1 should be possible in this case (connected bundle, path)"
 
-# TODO usikker på om denne er rett
 def test_ef1_with_connectivity_when_it_does_not_exist():
     n = 2
     m = 4
@@ -523,7 +522,7 @@ def test_ef1_with_connectivity_when_it_does_not_exist2():
          vertex_color='#bcf6f7')
 
     assert is_ef1_with_connectivity_possible(
-        n, m, V, star) == False, "EF1 should not be possible in this case (connected bundle, star)"
+        n, m, V, star) == unsat, "EF1 should not be possible in this case (connected bundle, star)"
 
 
 def test_mms_with_conflicts():
@@ -652,87 +651,6 @@ def test_mms_with_conflicts_unknown():
 
     print("elapsed time:", et - st)
 
-
-def test_mms_with_conflicts_manual_optimization():
-
-    n = 8
-    m = 26
-
-    V = np.array([[89., 32., 16., 32., 13., 65.,  1., 60., 59., 73., 61., 30., 87., 98.,  3., 90., 92., 26.,
-                   26., 80., 55., 12., 37., 33., 37., 99.],
-                  [92., 38., 40., 13., 63., 97., 69., 76., 93., 55., 40., 74., 53., 35., 89.,  1., 45., 78.,
-                   75., 56., 88., 57., 71., 38., 69.,  1.],
-                  [90., 42., 28.,  4., 88., 11., 27., 77., 50., 73.,  4., 92., 53., 96., 45., 67., 95., 94.,
-                   13., 60., 24., 73., 13., 58., 41., 14.],
-                  [12., 27., 18.,  6., 69., 65., 83.,  4., 87., 86., 96., 49., 30.,  9., 11., 83., 12.,  4.,
-                   49., 27., 51.,  6., 36., 11., 70., 39.],
-                  [41., 41., 27., 91., 22., 39., 68., 52., 10., 89., 12., 30., 70., 92., 75., 37., 58., 37.,
-                   37., 63., 77., 77., 13.,  8., 26., 12.],
-                  [2., 24., 63., 59.,  2., 74., 29., 45., 65., 84., 12.,  0., 98., 30., 89., 59., 83., 34.,
-                   34., 77., 13., 19., 24.,  0., 15., 45.],
-                  [93., 58., 51., 62., 21.,  5., 55., 22., 38., 81.,  0., 93., 30., 84., 47., 93., 94., 75.,
-                   9., 85.,  7., 14., 10., 60., 14., 27.],
-                  [32., 88., 63., 39., 21., 49., 25., 24.,  2.,  0., 81.,  8., 19., 11., 62., 91., 77., 80.,
-                   58., 71., 64., 25., 47.,  7., 16., 17.]])
-    graph = Graph.Adjacency(np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                                          0., 0., 1., 0., 0., 0., 0., 1., 0., 1., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                                          0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.],
-                                      [0., 1., 0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 1.,
-                                          0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 1., 1., 0., 0., 0., 1., 0., 0.,
-                                          0., 1., 0., 1., 0., 0., 0., 1., 0., 0., 1., 0., 0.],
-                                      [0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0.,
-                                      0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 1., 0.,
-                                      1., 0., 0., 0., 0., 1., 0., 1., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 1., 0., 0., 0., 0., 0., 1., 0., 0., 0.,
-                                      0., 0., 0., 0., 0., 1., 1., 1., 0., 1., 0., 0., 1.],
-                                      [0., 0., 0., 1., 0., 1., 0., 0., 0., 0., 0., 1., 1.,
-                                      0., 0., 0., 1., 0., 1., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.,
-                                      1., 0., 0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 1., 0.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 1., 0., 1., 0., 1., 0., 0.,
-                                      0., 0., 0., 0., 1., 0., 1., 0., 0., 0., 0., 0., 1.],
-                                      [0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 1., 1., 0.],
-                                      [0., 0., 0., 0., 0., 0., 1., 0., 0., 1., 0., 0., 0.,
-                                      0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
-                                      [0., 0., 0., 0., 1., 1., 0., 0., 0., 0., 0., 0., 0.,
-                                      1., 0., 1., 0., 0., 1., 0., 1., 1., 0., 0., 0., 0.],
-                                      [0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                                      0., 1., 0., 0., 0., 0., 0., 1., 0., 0., 1., 0., 0.],
-                                      [0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.],
-                                      [0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 1., 0.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 1., 1., 1., 1., 0., 0., 0.,
-                                      0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 1., 1., 0., 1., 0., 1., 1., 0., 0., 0., 0., 0.,
-                                      0., 1., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-                                      0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0., 0.],
-                                      [0., 1., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
-                                      0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 1.],
-                                      [0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1., 0., 1.,
-                                      1., 0., 1., 0., 0., 1., 0., 0., 1., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.,
-                                      0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.],
-                                      [0., 0., 0., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1., 0., 0., 0.]]), ADJ_UNDIRECTED)
-    plot(graph, target='Barabasi.pdf')
-    max_degree = max(Graph.degree(graph))
-    print("n:", n, "m:", m, "max deg:", max_degree)
-    st = time.time()
-
-    maximin_shares_manual_optimization(n, m, V, graph)
-    et = time.time()
-
-    print("elapsed time:", et - st)
 
 
 def test_discover_bad_valuation_functions():
@@ -1588,8 +1506,8 @@ if __name__ == "__main__":
     # test_discover_valuations_and_graph_and_agents()
     # test_is_agent_graph_connected()
     # test_ef1_with_connectivity_when_it_exists()
-    # test_ef1_with_connectivity_when_it_exists_2()
-    # test_ef1_with_connectivity_when_it_does_not_exist2()
+    test_ef1_with_connectivity_when_it_exists_2()
+    test_ef1_with_connectivity_when_it_does_not_exist2()
     # test_ef1_with_connectivity_csv()
     # test_is_graph_connected()
 
@@ -1623,5 +1541,5 @@ if __name__ == "__main__":
     # test_discover_valuations_knn_csv()
     # test_discover_valuations_and_graph_hummel_csv()
     # test_discover_valuations_and_graph_and_agents_csv()
-    create_graph()
+    # create_graph()
     print("Everything passed")
