@@ -425,13 +425,14 @@ def min_in_product_array_bool(d_i_j, v_i,m):
     v_i = [If(a, b,b) for a, b in zip(d_i_j, v_i)] # TODO: bedre måte å unngå numpy?
 
     min_v = -10
-    print(type(min_v), type(v_i[0]))
+    # print(type(min_v), type(v_i[0]))
     for i in range(m):
         min_v = If(
                     And(d_i_j[i],
                         Or(
                             min_v < 0,
-                            v_i[i] < min_v)
+                            v_i[i] < min_v),
+                        v_i[i] > 0
                         )
                         ,
                     v_i[i], 

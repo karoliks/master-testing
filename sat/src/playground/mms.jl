@@ -39,6 +39,7 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
     # Z3.setOption("pp-decimal", true)
     formulas = []
     ctx = Context()
+    
     # println("hei2")
     # TODO hvilket tall? og vanlig variabel eller z3 variabel?
     mms = real_const(ctx,"mms_"* string(this_agent))
@@ -54,6 +55,8 @@ function get_mms_for_this_agent(this_agent, n, m, V, G)
             [ite(A[i][g], real_val(ctx,V[this_agent,g]), real_val(ctx,0)) for g in 1:m]))  # look at this_agents values, because this is from her point of view
     end
     opt = Optimize(ctx)
+    set(ctx,"timeout", 300000)  # TODO increase timeout
+
     # set(opt,"timeout", 5000)  # TODO increase timeout
     add(opt,and(formulas))
     add(opt,get_formula_for_one_item_to_one_agent(A, n, m, ctx))
@@ -145,7 +148,7 @@ function erdos_renyi_experiment()
     discarded_graph_counter = 0
 
     for i in 1:100
-        n = 4#rand(2:10)
+        n = rand(2:10)
         m = rand(n*2:n*3)
         p = rand()
 
@@ -174,7 +177,7 @@ function erdos_renyi_experiment()
         push!(items, m)
     end
 
-    CSV.write("erdos_renyi_mms_z3_items_julia_4a.csv", (times = times, agents=agents, items=items))
+    CSV.write("mms_no_conflicts_z3_julia.csv", (times = times, agents=agents, items=items))
 
     println("timed_out_counter", timed_out_counter)
     println("discarded_graph_counter", discarded_graph_counter)

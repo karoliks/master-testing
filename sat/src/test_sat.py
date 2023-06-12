@@ -40,7 +40,7 @@ def test_efx_no_conflicts_csv():
     results = []
     timed_out_counter = 0
     for i in range(100):
-        n = randint(2, 8)#50)
+        n = randint(2, 10)
         m = randint(n*2, n*4)
         print("iteration:",i,"n:",n,"m:", m)
 
@@ -463,16 +463,16 @@ def test_ef1_with_conflicts():
 
 
 def test_ef1_with_connectivity_when_it_exists():
-    n = 2
+    n = 4
     m = 6
 
-    V = np.array([[1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.]])
+    V = np.array([[1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.], [1., 3., 2., 1., 3., 1.]])
 
     path = Graph.Ring(n=6, circular=False)
     plot(path, target='path.pdf')
 
     assert is_ef1_with_connectivity_possible(
-        n, m, V, path) == True, "EF1 should be possible in this case (connected bundle, path)"
+        n, m, V, path) == sat, "EF1 should be possible in this case (connected bundle, path)"
 
 
 def test_ef1_with_connectivity_when_it_exists_2():
@@ -1112,7 +1112,7 @@ def test_discover_valuations_and_graph_hummel_csv():
     results = []
     graphs = []
     timed_out_counter = 0
-    for i in range(4,10):
+    for i in range(6,7):
         n = i
         m = 3 + n-1
         
@@ -1452,7 +1452,7 @@ def test_discover_valuations_and_agents_efx_csv():
     times = []
     results = []
     items = []
-    for m in range(1,10):
+    for m in range(2,10):
         
         print("m:", m)
 
@@ -1562,8 +1562,8 @@ def test_is_path_always_ef1():
     print(is_path_always_ef1())
 
 def create_graph():
-    g = Graph.Adjacency([[False, False, False, False, False, False, False, False], [True, False, False, False, False, False, False, False], [True, True, False, False, False, False, False, False], [True, False, True, False, False, False, False, False], [True, True, False, True, False, False, False, False], [False, True, False, True, False, False, False, False], [True, False, True, False, True, True, False, False], [False, True, True, True, True, False, True, False]])
-    plot(g, target='creted_graph.pdf')
+    g = Graph.Adjacency([[False, False, False, False, False, False, False, False], [True, False, False, False, False, False, False, False], [False, True, False, False, False, False, False, False], [True, False, True, False, False, False, False, False], [True, True, False, True, False, False, False, False], [False, True, False, True, False, False, False, False], [True, False, True, False, True, True, False, False], [False, True, False, True, True, False, True, False]],ADJ_UNDIRECTED)
+    plot(g, target='creted_graph_only_agents.pdf')
 
 
 if __name__ == "__main__":
@@ -1604,10 +1604,10 @@ if __name__ == "__main__":
     # test_mms_with_conflicts_manual_optimization()
     # test_discover_valuations_and_graph_and_agents_binary_vals()
     # test_ef1_no_conflicts_csv()
-    # test_efx_no_conflicts_csv() 
+    # test_discover_valuations_and_agents_efx_csv() 
     # test_discover_valuations_and_agents_efx_csv()
     # test_discover_bad_valuation_functions_csv()
-    test_discover_valuations_and_graph_and_agents_only_paths_csv()
+    # test_discover_valuations_and_graph_and_agents_only_paths_csv()
     # test_discover_valuations_and_graph_and_agents_binary_vals_csv()
     # test_send_valuations_for_checking_bipartite_minus_edge()
     # test_discover_valuations_and_agents_efx()
@@ -1623,5 +1623,5 @@ if __name__ == "__main__":
     # test_discover_valuations_knn_csv()
     # test_discover_valuations_and_graph_hummel_csv()
     # test_discover_valuations_and_graph_and_agents_csv()
-    # create_graph()
+    create_graph()
     print("Everything passed")
