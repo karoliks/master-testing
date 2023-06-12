@@ -3,7 +3,6 @@ from z3 import *
 ### Helper functions ###
 ########################
 
-# TODO skrive om til en or-ing av alle elementene?
 def max_in_product_array_bool(d_i_j, v_i, m):
     max_value = 0
 
@@ -145,7 +144,6 @@ def get_edge_conflicts(G, A, n):
 
     return And([conflict for conflict in conflicts])
 
-# TODO brukes egentlig denne?
 def get_edge_conflicts_int(G, A, n):
     conflicts = []
     # Enforce the conflicts from the graph
@@ -245,8 +243,7 @@ def get_max_degree_less_than_agents(G, n, m):
     return And(formulas)
 
 
-# TODO er ikke sikker på om dette garanterer sti, men det virker lovende
-# TODO OBSBS does not gurantee a path!! But it does allow forpaths
+# OBSBS does not gurantee a path!! But it does allow forpaths
 def get_formula_for_path(G, m):
     formulas = []
 
@@ -328,7 +325,6 @@ def get_formula_for_one_item_to_one_agent(A, n, m):
 
     return And(formulas)
 
-# TODO heller bruke sum her siden det erint?
 def get_formula_for_one_item_to_one_agent_int(A, n, m):
     formulas = []
     # Each item allocated to at exactly one agent
@@ -413,15 +409,7 @@ def get_formula_for_ensuring_ef1_unknown_agents_boolean_values(A, V, n, m):
 
 
 def min_in_product_array_bool(d_i_j, v_i,m):
-    # Using nefative number for values not allocated to be able to distinguish
-    # between items between items with value equal to zero and items not allowed
-    # to check for (not allocated to this agent)
-    # product = [If(a, b,-10) for a, b in zip(d_i_j, v_i)]
-    # m = product[0]
-    # for v in product[1:]:
-    #     m = If(Or(And(v < m, v >= 0), m < 0), v, m) # TODO fjerne v >= 0 for å ikke bruke streng efx?
-    # # m = If(Not(Or(d_i_j)),0,m)
-    # return m
+
     v_i = [If(a, b,b) for a, b in zip(d_i_j, v_i)] # TODO: bedre måte å unngå numpy?
 
     min_v = -10
